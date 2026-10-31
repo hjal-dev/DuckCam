@@ -7,7 +7,7 @@
 
 ## Install {#install}
 
-[Install Here](https://github.com/hjal-dev/DuckCam/releases){ .md-button .md-button--primary }
+[Install Here](https://github.com/hjal-dev/DuckCam/releases/latest/download/DuckCam.zip){ .md-button .md-button--primary }
 
 1. Download the DuckCam zip from the [Releases page](https://github.com/hjal-dev/DuckCam/releases).
 2. Open your **SPT folder** (the one with `EscapeFromTarkov.exe` and the `BepInEx` folder).
