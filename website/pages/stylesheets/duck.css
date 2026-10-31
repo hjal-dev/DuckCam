@@ -244,3 +244,6 @@
   border-radius: 6px;
   border-left: 8px solid #111111;
 }
+
+.md-copyright a.kofi { color: inherit; opacity: 0.6; text-decoration: none; }
+.md-copyright a.kofi:hover { opacity: 1; text-decoration: underline; }

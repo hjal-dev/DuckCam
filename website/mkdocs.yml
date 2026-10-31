@@ -4,7 +4,7 @@ site_url: https://duckcam.wiki/
 docs_dir: pages
 repo_url: https://github.com/hjal-dev/DuckCam
 repo_name: GitHub
-copyright: DuckCam by Hj
+copyright: 'DuckCam by Hj - <a href="https://ko-fi.com/hjduck" class="kofi">Support on Ko-fi</a>'
 
 theme:
   name: material
