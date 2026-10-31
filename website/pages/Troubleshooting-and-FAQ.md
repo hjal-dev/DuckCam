@@ -5,7 +5,7 @@
 1. **DEBUG > Log level: Verbose**.
 2. Reproduce the problem.
 3. **DEBUG > Copy Report**.
-4. Open an issue with the report and `SPT/BepInEx/LogOutput.log` attached. A screenshot or short clip helps a lot.
+4. Open an issue with the report and `Your-SPT-Folder/BepInEx/LogOutput.log` attached. A screenshot or short clip helps a lot.
 
 ## Common problems
 
@@ -79,4 +79,4 @@ No. Every key works on tenkeyless keyboards and non-US layouts.
 Not yet. It's planned.
 
 **Where are my photos?**
-`SPT/DuckCam/Screenshots/`. See [Installation](Installation.md#where-duckcam-keeps-your-files) for every folder.
+`Your-SPT-Folder/DuckCam/Screenshots/`. See [Installation](Installation.md#where-duckcam-keeps-your-files) for every folder.

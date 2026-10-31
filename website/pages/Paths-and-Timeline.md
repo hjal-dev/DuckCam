@@ -78,7 +78,7 @@ A separate shake section adds a subtle hand-held wobble while a path or recordin
 
 ## Save and load
 
-Type a **File Name**, then **Save Path** or **Save Recording**. They're stored in `SPT/DuckCam/Paths/` and load on the same map. Paths are tied to positions on the map they were made on.
+Type a **File Name**, then **Save Path** or **Save Recording**. They're stored in `Your-SPT-Folder/DuckCam/Paths/` and load on the same map. Paths are tied to positions on the map they were made on.
 
 ## Animation timeline (Ctrl+T) {#animation-timeline-ctrlt}
 
@@ -96,7 +96,7 @@ An SFM-style timeline that keyframes **the camera and every character's whole po
 
 - Each key has an ease: smooth, linear, ease in, ease out or step.
 - Stopping on a time makes that pose editable in Pose Mode.
-- Save scenes to `SPT/DuckCam/Scenes/`.
+- Save scenes to `Your-SPT-Folder/DuckCam/Scenes/`.
 - Record it with **Ctrl+F12** for smooth video at any frame rate ([Capture](Capture.md)).
 
 ## Making a video from a path

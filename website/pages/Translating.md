@@ -7,14 +7,14 @@ DuckCam's menus are written in English. A translation is a JSON file that maps e
 | Folder | Use |
 |---|---|
 | `BepInEx/plugins/DuckCam/Locales/` | Ship a translation with DuckCam or as your own small mod |
-| `SPT/DuckCam/Locales/` | Your own translations. A file here replaces one with the same name in the plugin folder |
+| `Your-SPT-Folder/DuckCam/Locales/` | Your own translations. A file here replaces one with the same name in the plugin folder |
 
 The file name is the language code: `de.json`, `fr.json`, `pt-BR.json`, `ru.json`. Files starting with `_` are ignored (that's where the template goes).
 
 ## Make a translation
 
 1. Start a raid, open DuckCam and visit **every tab and window**: the spawner, Pose Mode, the timeline, the keybinds window and so on. DuckCam records each text it shows.
-2. **FRAME > Interface > Language > Write Template**. This writes `SPT/DuckCam/Locales/_template.json` with every text seen this session.
+2. **FRAME > Interface > Language > Write Template**. This writes `Your-SPT-Folder/DuckCam/Locales/_template.json` with every text seen this session.
 3. Copy it to `<code>.json` in the same folder (for example `de.json`).
 4. Fill in `Language` (the name shown in the menu, for example `Deutsch`) and `Author`, then translate the values:
 

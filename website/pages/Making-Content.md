@@ -1,10 +1,10 @@
 # Making Content
 
-Everything DuckCam saves is a plain file in `SPT/DuckCam/`, so it can be shared as a small zip. No coding, no Unity. Most of it you make inside DuckCam.
+Everything DuckCam saves is a plain file in `Your-SPT-Folder/DuckCam/`, so it can be shared as a small zip. No coding, no Unity. Most of it you make inside DuckCam.
 
 ![Make your own add-ons](images/addons.png)
 
-| You want to share | Folder in `SPT/DuckCam/` | Made with |
+| You want to share | Folder in `Your-SPT-Folder/DuckCam/` | Made with |
 |---|---|---|
 | Frames and stickers | `Overlays` | Any image editor |
 | Poses | `Poses` | Pose Mode or CHARACTERS |
@@ -24,7 +24,7 @@ Zip the folder structure starting at `DuckCam`:
 DuckCam/Overlays/Film Frames/35mm.png
 DuckCam/Poses/Leaning On Wall.json
 ```
-People extract it into their SPT folder so the files land in `SPT/DuckCam/...`, then press the tab's **Rescan** button or restart the raid.
+People extract it into their SPT folder so the files land in `Your-SPT-Folder/DuckCam/...`, then press the tab's **Rescan** button or restart the raid.
 
 ## Frames and stickers
 

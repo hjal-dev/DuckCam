@@ -6,7 +6,7 @@ Frames, stickers, text, borders and masks, drawn **into the saved photo** exactl
 
 ## Frames (your PNG files)
 
-1. Put PNG (or JPG) files in `SPT/DuckCam/Overlays/`. Files directly in that folder are listed under **General**; every subfolder becomes its own category.
+1. Put PNG (or JPG) files in `Your-SPT-Folder/DuckCam/Overlays/`. Files directly in that folder are listed under **General**; every subfolder becomes its own category.
 2. Press **Overlay Folder > Rescan**.
 3. Pick a **Frame** and set **Frame Opacity**.
 

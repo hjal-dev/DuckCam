@@ -33,7 +33,7 @@ Save a role and its gear as a **kit** to reuse it.
 2. Save it as a kit with a name. Mark favourites to find them quickly.
 3. Load a kit and spawn **several bots** from it at once, for example a whole squad in matching gear.
 
-Kits are stored in `SPT/DuckCam/Kits/` and can be shared.
+Kits are stored in `Your-SPT-Folder/DuckCam/Kits/` and can be shared.
 
 ## Add To Photo (photo-only bots)
 

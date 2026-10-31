@@ -112,7 +112,7 @@ A right **click** (or **W**) opens the pose menu with the most common commands, 
 
 ## Library
 
-Type a name and press **SAVE NEW** to save the whole visible pose to `SPT/DuckCam/Poses/`. Load poses from the list, on any character. Saved poses also appear in CHARACTERS under **Category > DuckCam**.
+Type a name and press **SAVE NEW** to save the whole visible pose to `Your-SPT-Folder/DuckCam/Poses/`. Load poses from the list, on any character. Saved poses also appear in CHARACTERS under **Category > DuckCam**.
 
 ## Weapons while posing
 

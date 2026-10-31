@@ -33,7 +33,7 @@ Press **E** a few times to reach **EFFECTS**. Use the arrow keys (or click the a
 - Press **Tab** (or **F11**) to hide the menu.
 - Press **P** to take the photo. With the menu open, **Space** also takes it.
 
-The photo is saved as a PNG in `SPT/DuckCam/Screenshots/`, with no UI in it. A message at the top right shows the file name.
+The photo is saved as a PNG in `Your-SPT-Folder/DuckCam/Screenshots/`, with no UI in it. A message at the top right shows the file name.
 
 ## 5. Leave DuckCam
 

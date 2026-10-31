@@ -99,7 +99,7 @@ When you pose an arm, the weapon follows the right hand. In Pose Mode, **WEAPON 
 | **Character Visible** | Hide this character without removing it |
 | **Surrounding NPCs** | Hide every real bot nearby for a clean shot |
 | **Clothes & Gear > Edit** | Jump to [Outfit and Gear](Outfit-and-Gear.md) |
-| **Save** | Save this character (outfit, gear, pose, edits) to `SPT/DuckCam/Actors/` |
+| **Save** | Save this character (outfit, gear, pose, edits) to `Your-SPT-Folder/DuckCam/Actors/` |
 | **Remove** | Remove this character |
 
 ## Saved poses

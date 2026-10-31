@@ -30,7 +30,7 @@ Hands-on recipes from your first photo to animated scenes. Each one lists what y
 6. Optional: **DEPTH OF FIELD** > turn it on, **Focus Mode: Screen Center**, lower the **Aperture** until the background softens.
 7. Press **Tab** to hide the menu, then **P**.
 
-Your photo is in `SPT/DuckCam/Screenshots/`.
+Your photo is in `Your-SPT-Folder/DuckCam/Screenshots/`.
 
 ![Example first photo](images/guide-first-photo.png)
 
@@ -155,7 +155,7 @@ Your photo is in `SPT/DuckCam/Screenshots/`.
 6. Turn on **3 s Countdown**.
 7. Go to **CAPTURE**: set **Frame Rate** (60 is smooth) and **Resolution**.
 8. Press **Ctrl+F12** to start recording, then press **Play** in PATHS.
-9. When the move ends, press **Ctrl+F12** to stop. The MP4 is in `SPT/DuckCam/Videos/`.
+9. When the move ends, press **Ctrl+F12** to stop. The MP4 is in `Your-SPT-Folder/DuckCam/Videos/`.
 
 > Recording locks the game clock to the frame rate, so the video is perfectly smooth even if your PC stutters while recording.
 
@@ -243,7 +243,7 @@ Your photo is in `SPT/DuckCam/Screenshots/`.
 | An animated scene | Timeline save | `Scenes` |
 | A bot loadout | Bot Spawner kit | `Kits` |
 
-All are plain files in `SPT/DuckCam/`. Zip them to share ([Making Content](Making-Content.md)).
+All are plain files in `Your-SPT-Folder/DuckCam/`. Zip them to share ([Making Content](Making-Content.md)).
 
 ---
 
@@ -254,7 +254,7 @@ All are plain files in `SPT/DuckCam/`. Zip them to share ([Making Content](Makin
 1. Make a new image at your screen's shape, for example **1920x1080** or **3840x2160**.
 2. Draw your frame around the edges. Keep the middle **transparent**.
 3. Export as **PNG** with transparency.
-4. Put it in `SPT/DuckCam/Overlays/`. Use a subfolder (for example `Overlays/Film/`) to give it its own category.
+4. Put it in `Your-SPT-Folder/DuckCam/Overlays/`. Use a subfolder (for example `Overlays/Film/`) to give it its own category.
 5. In game: **OVERLAYS > Overlay Folder > Rescan**, then pick it under **Frame**.
 
 Stickers work the same way: any size, transparent around the shape. Add them with **Add Sticker**.

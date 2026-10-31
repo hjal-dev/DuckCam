@@ -35,6 +35,6 @@ Save your current look under a name to use it again later.
 2. Type a name in **Filter Name**.
 3. Press **Save Look As Filter**.
 
-Your filter appears in the **Preset** list with a star. It's stored as a file in `SPT/DuckCam/Filters/`, so you can share it ([Making Content](Making-Content.md)).
+Your filter appears in the **Preset** list with a star. It's stored as a file in `Your-SPT-Folder/DuckCam/Filters/`, so you can share it ([Making Content](Making-Content.md)).
 
 > Effects are always restored when you leave DuckCam, so your raid looks normal again.

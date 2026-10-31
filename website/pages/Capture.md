@@ -10,7 +10,7 @@ Photos (screen size to 16K, optional transparent background) and video.
 
 - **P** any time, **Space** with the menu open, or **Take Screenshot** here.
 - The UI is hidden automatically. Grids and focus planes never appear.
-- Saved as PNG in `SPT/DuckCam/Screenshots/` with a name like `DuckCam_2026-10-28_13-09-09_Factory_008.png`.
+- Saved as PNG in `Your-SPT-Folder/DuckCam/Screenshots/` with a name like `DuckCam_2026-10-28_13-09-09_Factory_008.png`.
 - **JSON Sidecar** also saves a small file with the map, camera and characters.
 - **Last Photo** shows where the latest one went.
 

@@ -12,7 +12,7 @@ A scene preset stores: effects and filter, depth of field, frame and grid, time 
 2. Type a **Preset Name**.
 3. Press **Save Scene Preset**.
 
-Presets are plain files in `SPT/DuckCam/Presets/`, easy to back up or share.
+Presets are plain files in `Your-SPT-Folder/DuckCam/Presets/`, easy to back up or share.
 
 ## Load a preset
 

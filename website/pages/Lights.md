@@ -49,6 +49,6 @@ Save a group of lights and put it back around any character, on any map.
 3. Type a **Rig Name** and press **Save Rig**.
 4. Later, load the rig: the lights appear in the same arrangement around the camera or the chosen character.
 
-Rigs are stored in `SPT/DuckCam/LightRigs/`.
+Rigs are stored in `Your-SPT-Folder/DuckCam/LightRigs/`.
 
 > Lights are removed when you leave DuckCam. Save a rig or a [scene preset](Presets.md) to keep them.
