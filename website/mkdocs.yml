@@ -1,0 +1,74 @@
+site_name: DuckCam
+site_description: Photo mode for SPT by Hj
+site_url: https://duckcam.wiki/
+docs_dir: pages
+repo_url: https://github.com/hjal-dev/DuckCam
+repo_name: GitHub
+copyright: DuckCam by Hj
+
+theme:
+  name: material
+  logo: images/duck-logo.png
+  favicon: images/duck.png
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
+  features:
+    - navigation.sections
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - toc.follow
+
+extra_css:
+  - stylesheets/duck.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.keys
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: Installation.md
+      - Quick Start: Quick-Start.md
+      - Controls and Keybinds: Controls-and-Keybinds.md
+      - The Menu: The-Menu.md
+  - Using DuckCam:
+      - Step-by-step Guides: Guides.md
+      - Camera and Motion:
+          - Camera: Camera.md
+          - Motion: Motion.md
+          - Time: Time.md
+          - Paths and Timeline: Paths-and-Timeline.md
+      - Look and Light:
+          - Depth of Field: Depth-of-Field.md
+          - Effects: Effects.md
+          - Lights: Lights.md
+          - Environment: Environment.md
+      - Characters:
+          - Characters: Characters.md
+          - Outfit and Gear: Outfit-and-Gear.md
+          - Pose Mode: Pose-Mode.md
+          - Bot Spawner: Bot-Spawner.md
+      - Output and Settings:
+          - Capture: Capture.md
+          - Overlays: Overlays.md
+          - Frame: Frame.md
+          - Presets: Presets.md
+          - Debug: Debug.md
+  - Community:
+      - Making Content: Making-Content.md
+      - Translating: Translating.md
+      - Troubleshooting and FAQ: Troubleshooting-and-FAQ.md
