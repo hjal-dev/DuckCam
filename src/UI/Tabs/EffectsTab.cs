@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DuckCam.Core;
 using DuckCam.Rendering;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace DuckCam.UI
                 return;
             }
             string[] mine = CustomFilters.List();
-            string[] presets = new[] { "Custom" }.Concat(PhotoEffects.PresetNames).Concat(mine.Select(n => "* " + n)).ToArray();
+            string[] presets = new[] { "Custom" }.Concat(PhotoEffects.PresetNames).Concat(mine.Select(n => "* " + ContentPacks.Display(n))).ToArray();
             if (_effectPreset >= presets.Length)
             {
                 _effectPreset = 0;
@@ -34,7 +35,7 @@ namespace DuckCam.UI
                 else if (preset > builtIn)
                 {
                     string error = CustomFilters.Apply(fx, mine[preset - builtIn - 1]);
-                    _c.LastMessage = error == null ? $"Filter '{mine[preset - builtIn - 1]}' applied." : "Filter could not be loaded: " + error;
+                    _c.LastMessage = error == null ? $"Filter '{ContentPacks.Display(mine[preset - builtIn - 1])}' applied." : "Filter could not be loaded: " + error;
                 }
             }
             if (fx.FilterAvailable)
@@ -82,10 +83,10 @@ namespace DuckCam.UI
                     _c.LastMessage = "Filter save failed: " + ex.Message;
                 }
             }
-            foreach (string name in mine)
+            foreach (string name in _kit.Packs(_filterPacks, CustomFilters.Directory, mine))
             {
                 bool confirming = _deleteFilter == name;
-                int clicked = _kit.ListRow("* " + name, "", "Apply", confirming ? "Sure?" : "Delete");
+                int clicked = _kit.ListRow("* " + _filterPacks.Show(name), "", "Apply", confirming ? "Sure?" : "Delete");
                 if (clicked == 0)
                 {
                     string error = CustomFilters.Apply(fx, name);

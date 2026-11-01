@@ -201,7 +201,7 @@ namespace DuckCam.Actors
             try
             {
                 _cache = System.IO.Directory.Exists(Directory)
-                    ? System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray()
+                    ? ContentPacks.List(Directory).Where(k => !ContentPacks.IsPack(k) || IsPoseFile(ContentPacks.FileOf(Directory, k))).ToArray()
                     : Array.Empty<string>();
             }
             catch (Exception ex)
@@ -212,7 +212,28 @@ namespace DuckCam.Actors
             return _cache;
         }
 
-        public static void Refresh() => _cache = null;
+        private static bool IsPoseFile(string path)
+        {
+            try
+            {
+                using (var reader = new StreamReader(path))
+                {
+                    var head = new char[400];
+                    int read = reader.Read(head, 0, head.Length);
+                    return new string(head, 0, read).Contains("\"DuckCam.Pose\"");
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void Refresh()
+        {
+            _cache = null;
+            ContentPacks.Invalidate(Directory);
+        }
 
         public static string NextDefaultName()
         {
@@ -236,24 +257,28 @@ namespace DuckCam.Actors
 
         public static void Save(PoseFile file)
         {
-            System.IO.Directory.CreateDirectory(Directory);
             file.SavedAt = DateTime.Now.ToString("o");
-            File.WriteAllText(Path.Combine(Directory, file.Name + ".json"), JsonConvert.SerializeObject(file, Formatting.Indented));
+            string key = file.Name;
+            System.IO.Directory.CreateDirectory(Path.GetDirectoryName(ContentPacks.FileOf(Directory, key)));
+            file.Name = ContentPacks.NameOf(key);
+            File.WriteAllText(ContentPacks.FileOf(Directory, key), JsonConvert.SerializeObject(file, Formatting.Indented));
             Refresh();
         }
 
         public static PoseFile Load(string name)
         {
-            return JsonConvert.DeserializeObject<PoseFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+            return JsonConvert.DeserializeObject<PoseFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
         }
 
-        public static bool Rename(string from, string to)
+        public static string Rename(string from, string to)
         {
-            string src = Path.Combine(Directory, from + ".json");
-            string dst = Path.Combine(Directory, to + ".json");
+            string pack = ContentPacks.PackOf(from);
+            string toKey = pack == null ? to : pack + "/" + to;
+            string src = ContentPacks.FileOf(Directory, from);
+            string dst = ContentPacks.FileOf(Directory, toKey);
             if (!File.Exists(src) || File.Exists(dst))
             {
-                return false;
+                return null;
             }
             PoseFile file = Load(from);
             if (file != null)
@@ -263,12 +288,12 @@ namespace DuckCam.Actors
                 File.Delete(src);
             }
             Refresh();
-            return true;
+            return toKey;
         }
 
         public static void Delete(string name)
         {
-            File.Delete(Path.Combine(Directory, name + ".json"));
+            File.Delete(ContentPacks.FileOf(Directory, name));
             Refresh();
         }
     }

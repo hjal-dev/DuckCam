@@ -353,6 +353,7 @@ namespace DuckCam.UI
             _icons["overlays"] = Paint(p => { p.Box(9, 4, 28, 23, 2.2f); p.Box(4, 9, 23, 28, 2.2f); p.Line(16, 13, 18, 17, 2f); p.Line(18, 17, 22, 17, 2f); p.Line(22, 17, 19, 20, 2f); });
             _icons["frame"] = Paint(p => { p.Box(3, 7, 29, 25, 2.2f); p.Box(9, 11, 23, 21, 1.6f); });
             _icons["presets"] = Paint(p => { p.Box(5, 6, 27, 27, 2.2f); p.Line(10, 6, 10, 13, 2.2f); p.Line(10, 13, 22, 13, 2.2f); p.Line(22, 13, 22, 6, 2.2f); p.Line(10, 19, 22, 19, 2f); p.Line(10, 23, 18, 23, 2f); });
+            _icons["addons"] = Paint(p => { p.Box(4, 9, 22, 27, 2.2f); p.Line(25, 4, 25, 16, 2.4f); p.Line(19, 10, 31, 10, 2.4f); p.Line(9, 16, 17, 16, 2f); p.Line(9, 21, 15, 21, 2f); });
             _icons["capture"] = Paint(p => { p.Box(4, 10, 28, 26, 2.2f); p.Ring(16, 18, 5, 2.2f); p.Line(11, 10, 13, 6, 2.2f); p.Line(13, 6, 19, 6, 2.2f); p.Line(19, 6, 21, 10, 2.2f); });
             _icons["debug"] = Paint(p => { p.Box(3, 6, 29, 26, 2f); p.Line(8, 12, 13, 16, 2.2f); p.Line(13, 16, 8, 20, 2.2f); p.Line(16, 21, 23, 21, 2.2f); });
 

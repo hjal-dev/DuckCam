@@ -44,9 +44,9 @@ namespace DuckCam.UI
                 _kit.Note(tiles > 1
                     ? $"The photo is built from {tiles * tiles} zoomed-in screen captures, so the screen steps through them for a few seconds. Keep the scene frozen. Vignette, grain and chromatic aberration are off for tiled photos (they would repeat in every tile)."
                     : "The screen is captured and scaled to this size.");
-                if (_c.Decor.Active && (tiles > 1 || request.Transparent))
+                if (_c.Decor.Active && request.Transparent)
                 {
-                    _kit.Note("Text, border and mask decorations are left out of tiled and transparent photos.");
+                    _kit.Note("Text, border and mask decorations are left out of transparent photos.");
                 }
             }
             if (request.Transparent)

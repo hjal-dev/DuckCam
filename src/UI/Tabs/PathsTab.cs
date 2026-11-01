@@ -517,14 +517,14 @@ namespace DuckCam.UI
             {
                 _fileMessage = "Saved " + System.IO.Path.GetFileName(PathStorage.SaveRecording(rec, _fileName));
             }
-            foreach (string file in PathStorage.List())
+            foreach (string file in _kit.Packs(_pathPacks, PathStorage.Directory, PathStorage.List()))
             {
-                if (_kit.ListRow(file, "", "Load") == 0)
+                if (_kit.ListRow(_pathPacks.Show(file), "", "Load") == 0)
                 {
                     string error = PathStorage.Load(file, path, rec);
                     _kit.ClearBuffers();
                     _editKey = -1;
-                    _fileMessage = error == null ? "Loaded " + file : file + ": " + error;
+                    _fileMessage = error == null ? "Loaded " + ContentPacks.Display(file) : ContentPacks.Display(file) + ": " + error;
                 }
             }
             if (_fileMessage != null)

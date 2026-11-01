@@ -142,7 +142,7 @@ namespace DuckCam.Core
                 {
                     _ui.PoseEditor.HandleKeys();
                 }
-                else if (UiVisible && !_ui.Spawner.Open)
+                else if (UiVisible && !_ui.Spawner.Open && !_ui.Addons.Open)
                 {
                     _ui.HandleKeys();
                 }
@@ -936,6 +936,7 @@ namespace DuckCam.Core
             try
             {
                 _ui.Spawner.Close();
+                _ui.Addons.Close();
                 _ui.PoseEditor.Close();
                 _ui.Timeline.Close();
                 BotSpawns.DespawnSessionBots();
@@ -997,6 +998,11 @@ namespace DuckCam.Core
             if (DuckCamConfig.UiExit.Value.IsDown() && _ui.Spawner.Open)
             {
                 _ui.Spawner.Back();
+                return false;
+            }
+            if (DuckCamConfig.UiExit.Value.IsDown() && _ui.Addons.Open)
+            {
+                _ui.Addons.Back();
                 return false;
             }
             if (DuckCamConfig.UiExit.Value.IsDown() && _ui.PoseEditor.Open)
@@ -1540,7 +1546,7 @@ namespace DuckCam.Core
         private IEnumerator ScreenshotRoutine()
         {
             string before = _screenshots.LastPath;
-            yield return _screenshots.Capture(Camera, Actors, Overlays);
+            yield return _screenshots.Capture(Camera, Actors, Overlays, Decor);
             if (_screenshots.LastError != null)
             {
                 LastMessage = "Photo failed: " + _screenshots.LastError;

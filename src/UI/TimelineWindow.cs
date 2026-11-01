@@ -306,6 +306,21 @@ namespace DuckCam.UI
             GUI.SetNextControlName(HudKit.FieldPrefix + "SceneName");
             _sceneName = GUI.TextField(new Rect(x, y + 2f, 150f, 22f), _sceneName ?? "", 40, HudTheme.Field);
             x += 156f;
+            string[] scenes = SceneTimeline.List();
+            if (scenes.Length > 0)
+            {
+                int at = Array.FindIndex(scenes, n => string.Equals(n, _sceneName, StringComparison.OrdinalIgnoreCase));
+                if (Btn(ref x, y, 26f, "<", false))
+                {
+                    _sceneName = scenes[at <= 0 ? scenes.Length - 1 : at - 1];
+                    SayPack();
+                }
+                if (Btn(ref x, y, 26f, ">", false))
+                {
+                    _sceneName = scenes[(at + 1) % scenes.Length];
+                    SayPack();
+                }
+            }
             if (Btn(ref x, y, 60f, "SAVE", false))
             {
                 try
@@ -321,7 +336,7 @@ namespace DuckCam.UI
             {
                 string error = t.Load(_sceneName, _c.Actors.Actors);
                 _selected = null;
-                Say(error == null ? $"Loaded scene '{_sceneName}'." : error);
+                Say(error == null ? $"Loaded scene '{ContentPacks.Display(_sceneName)}'." : error);
                 Seek(0f, true);
             }
             if (Btn(ref x, y, 60f, "NEW", false))
@@ -362,6 +377,13 @@ namespace DuckCam.UI
             }
             DrawPlayhead(lane);
             HandleLaneInput(lane);
+        }
+
+        private void SayPack()
+        {
+            string pack = ContentPacks.PackOf(_sceneName);
+            string info = pack == null ? null : ContentPacks.InfoLine(SceneTimeline.Directory, pack);
+            Say(info == null ? ContentPacks.Display(_sceneName) : ContentPacks.Display(_sceneName) + " - " + info);
         }
 
         private bool Btn(ref float x, float y, float w, string text, bool active)

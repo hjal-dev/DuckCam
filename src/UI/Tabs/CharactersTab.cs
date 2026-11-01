@@ -349,9 +349,9 @@ namespace DuckCam.UI
             if (saved.Length > 0)
             {
                 _kit.Section("Saved characters");
-                foreach (string name in saved)
+                foreach (string name in _kit.Packs(_actorPacks, SavedActors.Directory, saved))
                 {
-                    int action = _kit.ListRow(name, "", "Add", "Del");
+                    int action = _kit.ListRow(_actorPacks.Show(name), "", "Add", "Del");
                     if (action == 0 && actors.CanAdd)
                     {
                         _c.AddSavedActor(name);
@@ -371,6 +371,10 @@ namespace DuckCam.UI
         }
 
         private string _savePoseName = "";
+
+        private readonly PackFilter _actorPacks = new PackFilter();
+
+        private readonly PackFilter _posePacks = new PackFilter();
 
         private void DrawSavedPoses(PhotoActor a)
         {
@@ -401,11 +405,17 @@ namespace DuckCam.UI
                 _kit.Note("Pose a character (Ctrl+P opens the pose editor), then press Save Current Pose here or SAVE NEW in the pose editor. Saved poses live in " + PoseLibrary.Directory + " and work on any character.");
                 return;
             }
+            saved = _kit.Packs(_posePacks, PoseLibrary.Directory, saved);
+            if (saved.Length == 0)
+            {
+                _kit.Value("Pose", "None in this pack");
+                return;
+            }
             int shown = a.InSavedPose ? Array.FindIndex(saved, p => string.Equals(p, a.SavedPoseName, StringComparison.OrdinalIgnoreCase)) : -1;
             int index = Mathf.Max(0, shown);
-            int picked = _kit.Selector("Pose", saved, index);
+            int picked = _kit.Selector("Pose", saved.Select(_posePacks.Show).ToArray(), index);
             bool apply = picked != index;
-            if (shown < 0 && _kit.Action("Apply Pose", saved[picked]))
+            if (shown < 0 && _kit.Action("Apply Pose", _posePacks.Show(saved[picked])))
             {
                 apply = true;
             }
@@ -415,7 +425,7 @@ namespace DuckCam.UI
             }
             if (a.InSavedPose)
             {
-                _kit.Value("Applied", a.SavedPoseName);
+                _kit.Value("Applied", ContentPacks.Display(a.SavedPoseName));
             }
             if (_poseError != null)
             {

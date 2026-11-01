@@ -1,5 +1,6 @@
 using System.Linq;
 using DuckCam.Actors;
+using DuckCam.Core;
 using DuckCam.Lighting;
 using UnityEngine;
 
@@ -85,9 +86,9 @@ namespace DuckCam.UI
                     _rigMessage = "Saved " + System.IO.Path.GetFileName(path);
                 }
             }
-            foreach (string rig in LightRigs.List())
+            foreach (string rig in _kit.Packs(_rigPacks, LightRigs.Directory, LightRigs.List()))
             {
-                if (_kit.ListRow(rig, "", "Load") == 0)
+                if (_kit.ListRow(_rigPacks.Show(rig), "", "Load") == 0)
                 {
                     LightRigFile file = LightRigs.Load(rig, out string error);
                     if (file == null)
@@ -101,7 +102,7 @@ namespace DuckCam.UI
                     else
                     {
                         int n = LightRigs.Apply(file, studio, _c.Restores, anchor, false);
-                        _rigMessage = $"Loaded {n} lights from '{rig}' around the {LightRigs.AnchorNames[_rigAnchor].ToLowerInvariant()}.";
+                        _rigMessage = $"Loaded {n} lights from '{ContentPacks.Display(rig)}' around the {LightRigs.AnchorNames[_rigAnchor].ToLowerInvariant()}.";
                     }
                 }
             }

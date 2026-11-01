@@ -34,10 +34,10 @@ namespace DuckCam.Camera
             {
                 return Array.Empty<string>();
             }
-            return System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n).ToArray();
+            return ContentPacks.List(Directory);
         }
 
-        public static string SavePath(CameraPath path, string name)
+        public static string SavePath(CameraPath path, string name, string pack = null)
         {
             var file = new PathFile
             {
@@ -53,10 +53,10 @@ namespace DuckCam.Camera
                 BaseSpeed = path.BaseSpeed,
                 Keys = path.Keys.Select(PackKey).ToList()
             };
-            return Write(name, file);
+            return Write(name, file, pack);
         }
 
-        public static string SaveRecording(CameraRecording recording, string name)
+        public static string SaveRecording(CameraRecording recording, string name, string pack = null)
         {
             var file = new PathFile
             {
@@ -66,14 +66,14 @@ namespace DuckCam.Camera
                 Loop = recording.Loop,
                 Keys = recording.Samples.Select(s => Pack(s.Position, s.Rotation, s.Fov, s.Time)).ToList()
             };
-            return Write(name, file);
+            return Write(name, file, pack);
         }
 
         public static string Load(string name, CameraPath path, CameraRecording recording)
         {
             try
             {
-                PathFile file = JsonConvert.DeserializeObject<PathFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                PathFile file = JsonConvert.DeserializeObject<PathFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
                 if (file?.Keys == null)
                 {
                     return "empty or invalid file";
@@ -113,15 +113,15 @@ namespace DuckCam.Camera
             }
         }
 
-        private static string Write(string name, PathFile file)
+        private static string Write(string name, PathFile file, string pack)
         {
-            System.IO.Directory.CreateDirectory(Directory);
             foreach (char c in Path.GetInvalidFileNameChars())
             {
                 name = name.Replace(c, '_');
             }
-            string full = Path.Combine(Directory, name + ".json");
+            string full = ContentPacks.SaveFile(Directory, pack, name);
             File.WriteAllText(full, JsonConvert.SerializeObject(file, Formatting.Indented));
+            ContentPacks.Invalidate(Directory);
             return full;
         }
 

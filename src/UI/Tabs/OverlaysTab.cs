@@ -132,7 +132,7 @@ namespace DuckCam.UI
                 d.MaskColor = _kit.Selector("Mask Color", PhotoDecor.ColorNames, d.MaskColor);
                 d.MaskOpacity = _kit.Slider("Mask Opacity", d.MaskOpacity * 100f, 5f, 100f, 5f, "0") / 100f;
             }
-            _kit.Note("Text, border and mask are drawn into the photo inside the frame, exactly as previewed (they show with the menu hidden too). With high-res capture above 1x, they may not scale with the photo.");
+            _kit.Note("Text, border and mask are drawn into the photo inside the frame, exactly as previewed (they show with the menu hidden too). Transparent photos leave them out.");
         }
     }
 }

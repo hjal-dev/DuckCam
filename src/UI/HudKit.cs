@@ -283,6 +283,22 @@ namespace DuckCam.UI
             return index;
         }
 
+        public string[] Packs(Core.PackFilter filter, string root, string[] keys)
+        {
+            string[] options = filter.Options(keys, root);
+            if (!filter.Active)
+            {
+                return keys;
+            }
+            filter.Pick(options, Selector("Pack", options, filter.Index(options)));
+            string info = filter.Info(root);
+            if (info != null)
+            {
+                Note(info);
+            }
+            return filter.Apply(keys);
+        }
+
         public bool Toggle(string label, bool value)
         {
             return Selector(label, new[] { "Off", "On" }, value ? 1 : 0) == 1;

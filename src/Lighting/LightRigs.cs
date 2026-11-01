@@ -44,7 +44,7 @@ namespace DuckCam.Lighting
             {
                 return Array.Empty<string>();
             }
-            return System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n).ToArray();
+            return ContentPacks.List(Directory);
         }
 
         public static LightRigFile Capture(IEnumerable<StudioLight> lights, Transform anchor, string anchorName)
@@ -121,11 +121,11 @@ namespace DuckCam.Lighting
             return created;
         }
 
-        public static string Save(LightRigFile file, string name)
+        public static string Save(LightRigFile file, string name, string pack = null)
         {
-            System.IO.Directory.CreateDirectory(Directory);
-            string path = Path.Combine(Directory, Sanitize(name) + ".json");
+            string path = ContentPacks.SaveFile(Directory, pack, Sanitize(name));
             File.WriteAllText(path, JsonConvert.SerializeObject(file, Formatting.Indented));
+            ContentPacks.Invalidate(Directory);
             return path;
         }
 
@@ -134,7 +134,7 @@ namespace DuckCam.Lighting
             error = null;
             try
             {
-                return JsonConvert.DeserializeObject<LightRigFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                return JsonConvert.DeserializeObject<LightRigFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
             }
             catch (Exception ex)
             {

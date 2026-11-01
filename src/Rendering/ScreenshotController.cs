@@ -26,7 +26,7 @@ namespace DuckCam.Rendering
 
         public bool ExternalCapture { get; set; }
 
-        public IEnumerator Capture(PhotoCameraController camera, ActorManager actors, OverlayController overlays)
+        public IEnumerator Capture(PhotoCameraController camera, ActorManager actors, OverlayController overlays, PhotoDecor decor = null)
         {
             if (Capturing || ExternalCapture)
             {
@@ -75,7 +75,7 @@ namespace DuckCam.Rendering
                 }
                 else
                 {
-                    Save(renderer.Result, camera, actors, request.Transparent ? null : overlays, renderer.Info, request.Transparent);
+                    Save(renderer.Result, camera, actors, request.Transparent ? null : overlays, renderer.Info, request.Transparent, renderer.WasComposite && !request.Transparent ? decor : null);
                 }
             }
             catch (Exception ex)
@@ -122,11 +122,22 @@ namespace DuckCam.Rendering
             };
         }
 
-        public string Save(Texture2D texture, PhotoCameraController camera, ActorManager actors, OverlayController overlays, Dictionary<string, object> extra, bool transparent = false)
+        public string Save(Texture2D texture, PhotoCameraController camera, ActorManager actors, OverlayController overlays, Dictionary<string, object> extra, bool transparent = false, PhotoDecor decor = null)
         {
             try
             {
                 RectInt region = CompositionOverlay.FrameRect(texture.width, texture.height, DuckCamConfig.FrameAspectRatio.Value);
+                if (decor != null && decor.Active)
+                {
+                    try
+                    {
+                        decor.Bake(texture, region);
+                    }
+                    catch (Exception ex)
+                    {
+                        PhotoLog.Warn("Decorations left out of the photo: " + ex.Message);
+                    }
+                }
                 overlays?.Composite(texture, region);
                 texture = CropToFrame(texture);
                 if (!transparent)

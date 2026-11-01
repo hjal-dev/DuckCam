@@ -70,6 +70,7 @@ namespace DuckCam.UI
             Spawner = new SpawnerWindow(controller, controller.BotSpawns);
             PoseEditor = new PoseEditorWindow(controller);
             Timeline = new TimelineWindow(controller);
+            Addons = new AddonCreatorWindow();
             Register("CAMERA", "camera", DrawCamera);
             Register("MOTION", "motion", DrawMotion);
             Register("TIME", "time", DrawTime);
@@ -83,6 +84,7 @@ namespace DuckCam.UI
             Register("OVERLAYS", "overlays", DrawOverlays);
             Register("FRAME", "frame", DrawFrame);
             Register("PRESETS", "presets", DrawPresets);
+            Register("ADD-ONS", "addons", DrawAddons);
             Register("CAPTURE", "capture", DrawCapture);
             Register("DEBUG", "debug", DrawDebug);
         }
@@ -109,7 +111,7 @@ namespace DuckCam.UI
                     return false;
                 }
                 Vector3 m = Input.mousePosition;
-                return Spawner.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
+                return Spawner.PointerOver || Addons.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !Addons.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
             }
         }
 
@@ -225,6 +227,10 @@ namespace DuckCam.UI
                 {
                     Spawner.Draw(vw, vh);
                 }
+                else if (Addons.Open)
+                {
+                    Addons.Draw(vw, vh);
+                }
                 else
                 {
                     bool panel = !PoseEditor.Open;
@@ -339,11 +345,18 @@ namespace DuckCam.UI
 
         public TimelineWindow Timeline { get; }
 
+        public AddonCreatorWindow Addons { get; }
+
         public void Scroll(float notches)
         {
             if (Spawner.Open)
             {
                 Spawner.Scroll(notches);
+                return;
+            }
+            if (Addons.Open)
+            {
+                Addons.Scroll(notches);
                 return;
             }
             if (Timeline.PointerOver)
@@ -598,6 +611,14 @@ namespace DuckCam.UI
         private int _effectPreset;
         private string _filterName = "My Filter";
         private string _deleteFilter;
+
+        private readonly Core.PackFilter _filterPacks = new Core.PackFilter();
+
+        private readonly Core.PackFilter _rigPacks = new Core.PackFilter();
+
+        private readonly Core.PackFilter _pathPacks = new Core.PackFilter();
+
+        private readonly Core.PackFilter _presetPacks = new Core.PackFilter();
         private int _overlayCategory;
         private int _overlayPick;
 

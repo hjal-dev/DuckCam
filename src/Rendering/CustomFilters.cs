@@ -30,7 +30,7 @@ namespace DuckCam.Rendering
             try
             {
                 _cache = System.IO.Directory.Exists(Directory)
-                    ? System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray()
+                    ? ContentPacks.List(Directory)
                     : Array.Empty<string>();
             }
             catch (Exception ex)
@@ -41,9 +41,13 @@ namespace DuckCam.Rendering
             return _cache;
         }
 
-        public static void Refresh() => _cache = null;
+        public static void Refresh()
+        {
+            _cache = null;
+            ContentPacks.Invalidate(Directory);
+        }
 
-        public static string Save(PhotoEffects fx, string name)
+        public static string Save(PhotoEffects fx, string name, string pack = null)
         {
             name = LightRigs.Sanitize(string.IsNullOrWhiteSpace(name) ? "My Filter" : name.Trim());
             var file = new CustomFilterFile
@@ -51,17 +55,16 @@ namespace DuckCam.Rendering
                 Filter = fx.FilterAvailable ? fx.Filter.ToString() : null,
                 Effects = fx.SnapshotValues()
             };
-            System.IO.Directory.CreateDirectory(Directory);
-            File.WriteAllText(Path.Combine(Directory, name + ".json"), JsonConvert.SerializeObject(file, Formatting.Indented));
+            File.WriteAllText(ContentPacks.SaveFile(Directory, pack, name), JsonConvert.SerializeObject(file, Formatting.Indented));
             Refresh();
-            return name;
+            return pack == null ? name : pack + "/" + name;
         }
 
         public static string Apply(PhotoEffects fx, string name)
         {
             try
             {
-                CustomFilterFile file = JsonConvert.DeserializeObject<CustomFilterFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                CustomFilterFile file = JsonConvert.DeserializeObject<CustomFilterFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
                 if (file == null)
                 {
                     return "empty file";
@@ -79,7 +82,7 @@ namespace DuckCam.Rendering
         {
             try
             {
-                File.Delete(Path.Combine(Directory, name + ".json"));
+                File.Delete(ContentPacks.FileOf(Directory, name));
                 Refresh();
                 return true;
             }

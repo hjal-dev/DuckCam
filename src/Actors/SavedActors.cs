@@ -35,10 +35,10 @@ namespace DuckCam.Actors
             {
                 return Array.Empty<string>();
             }
-            return System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n).ToArray();
+            return ContentPacks.List(Directory);
         }
 
-        public static string Save(PhotoActor actor)
+        public static string Save(PhotoActor actor, string pack = null)
         {
             if (actor.Descriptor == null)
             {
@@ -61,9 +61,8 @@ namespace DuckCam.Actors
                     SavedOnMap = GameContext.LocationId,
                     SavedAt = DateTime.Now.ToString("o")
                 };
-                System.IO.Directory.CreateDirectory(Directory);
-                string file = Sanitize(actor.Name) + ".json";
-                File.WriteAllText(Path.Combine(Directory, file), JsonConvert.SerializeObject(saved, Formatting.Indented));
+                File.WriteAllText(ContentPacks.SaveFile(Directory, pack, Sanitize(actor.Name)), JsonConvert.SerializeObject(saved, Formatting.Indented));
+                ContentPacks.Invalidate(Directory);
                 return null;
             }
             catch (Exception ex)
@@ -77,7 +76,7 @@ namespace DuckCam.Actors
             error = null;
             try
             {
-                SavedActor saved = JsonConvert.DeserializeObject<SavedActor>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                SavedActor saved = JsonConvert.DeserializeObject<SavedActor>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
                 if (saved == null || string.IsNullOrEmpty(saved.DescriptorJson))
                 {
                     error = "empty or invalid file";
@@ -111,7 +110,8 @@ namespace DuckCam.Actors
         {
             try
             {
-                File.Delete(Path.Combine(Directory, name + ".json"));
+                File.Delete(ContentPacks.FileOf(Directory, name));
+                ContentPacks.Invalidate(Directory);
             }
             catch (Exception ex)
             {

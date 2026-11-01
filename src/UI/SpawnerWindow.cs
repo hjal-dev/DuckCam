@@ -650,12 +650,24 @@ namespace DuckCam.UI
             RebuildPreview();
         }
 
+        private readonly PackFilter _kitPacks = new PackFilter();
+
+        private static string KitKey(BotKit kit) => kit.Pack == null ? kit.Name : kit.Pack + "/" + kit.Name;
+
         private void DrawKits(Rect r)
         {
             HudTheme.Fill(r, HudTheme.P.RowFill);
             GUI.Label(new Rect(r.x + 8f, r.y + 6f, 120f, 22f), "KIT NAME", HudTheme.HudSmall);
             GUI.SetNextControlName(HudKit.FieldPrefix + "SpawnerKitName");
-            _kitName = GUI.TextField(new Rect(r.x + 100f, r.y + 4f, r.width - 250f, 26f), _kitName ?? "", 40, HudTheme.Field);
+            _kitPacks.Options(_kits?.Select(k => KitKey(k)).ToArray() ?? new string[0], BotKits.Dir);
+            float packW = _kitPacks.Active ? 150f : 0f;
+            _kitName = GUI.TextField(new Rect(r.x + 100f, r.y + 4f, r.width - 250f - packW, 26f), _kitName ?? "", 40, HudTheme.Field);
+            if (_kitPacks.Active && Button(new Rect(r.xMax - 142f - packW, r.y + 3f, packW - 6f, 28f), "Pack: " + _kitPacks.Label, false))
+            {
+                _kitPacks.Cycle(_kits.Select(k => KitKey(k)).ToArray(), BotKits.Dir);
+                _message = _kitPacks.Info(BotKits.Dir) ?? _message;
+                _scroll = 0f;
+            }
             if (Button(new Rect(r.xMax - 142f, r.y + 3f, 134f, 28f), "Save Current", false))
             {
                 SaveKit();
@@ -668,7 +680,7 @@ namespace DuckCam.UI
             float y = r.y + 40f - _scroll;
             GUI.BeginGroup(new Rect(r.x, r.y + 40f, r.width, r.height - 44f));
             y -= r.y + 40f;
-            foreach (BotKit kit in _kits.ToList())
+            foreach (BotKit kit in _kits.Where(k => _kitPacks.Apply(new[] { KitKey(k) }).Length > 0).ToList())
             {
                 var row = new Rect(6f, y, r.width - 12f, 40f);
                 y += 44f;
@@ -683,7 +695,7 @@ namespace DuckCam.UI
                     TrySave(kit);
                     _kits = BotKits.LoadAll();
                 }
-                GUI.Label(new Rect(row.x + 42f, row.y + 2f, row.width - 360f, 20f), kit.Name, HudTheme.Value);
+                GUI.Label(new Rect(row.x + 42f, row.y + 2f, row.width - 360f, 20f), _kitPacks.Show(KitKey(kit)), HudTheme.Value);
                 GUI.Label(new Rect(row.x + 42f, row.y + 20f, row.width - 360f, 18f), $"{kit.RoleName} · {kit.Slots.Count} slot(s){(kit.InfiniteAmmo ? " · infinite ammo" : "")}", HudTheme.Note);
                 float bx = row.xMax - 312f;
                 if (Button(new Rect(bx, row.y + 6f, 70f, 28f), "Load", false)) LoadKit(kit);
@@ -946,6 +958,8 @@ namespace DuckCam.UI
             BotKit existing = _kits?.FirstOrDefault(k => string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase));
             BotKit kit = CurrentKit(name);
             kit.Favorite = existing?.Favorite ?? false;
+            kit.Pack = existing?.Pack;
+            kit.SourceFile = existing?.SourceFile;
             if (TrySave(kit))
             {
                 _kits = BotKits.LoadAll();

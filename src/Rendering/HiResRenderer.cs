@@ -134,6 +134,8 @@ namespace DuckCam.Rendering
 
         public bool ScreenIsComposite { get; private set; }
 
+        public bool WasComposite { get; private set; }
+
         private sealed class CameraState
         {
             public int Mask;
@@ -189,6 +191,7 @@ namespace DuckCam.Rendering
             try
             {
                 ScreenIsComposite = tiled || request.Transparent;
+                WasComposite = ScreenIsComposite;
                 if (tiled)
                 {
                     DisableLensEffects(cam, restores);

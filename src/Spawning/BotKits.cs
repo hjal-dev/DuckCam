@@ -17,24 +17,24 @@ namespace DuckCam.Spawning
         public bool InfiniteAmmo = true;
         public int SpareMags = 3;
         public bool SessionOnly;
+        [JsonIgnore]
+        public string Pack;
+        [JsonIgnore]
+        public string SourceFile;
     }
 
     internal static class BotKits
     {
         public const string None = "none";
 
-        private static string Dir => Path.Combine(DuckCamPlugin.DataRoot, "Kits");
+        public static string Dir => Path.Combine(DuckCamPlugin.DataRoot, "Kits");
 
         public static List<BotKit> LoadAll()
         {
             var list = new List<BotKit>();
             try
             {
-                if (!Directory.Exists(Dir))
-                {
-                    return list;
-                }
-                foreach (string file in Directory.GetFiles(Dir, "*.json"))
+                foreach (string file in ContentPacks.Scan(Dir, "*.json"))
                 {
                     try
                     {
@@ -42,6 +42,8 @@ namespace DuckCam.Spawning
                         if (kit != null)
                         {
                             kit.Slots = kit.Slots ?? new Dictionary<string, string>();
+                            kit.Pack = ContentPacks.PackOf(ContentPacks.KeyOf(Dir, file));
+                            kit.SourceFile = file;
                             list.Add(kit);
                         }
                     }
@@ -61,14 +63,14 @@ namespace DuckCam.Spawning
         public static string Save(BotKit kit)
         {
             Directory.CreateDirectory(Dir);
-            string path = Path.Combine(Dir, Sanitize(kit.Name) + ".json");
+            string path = kit.Pack != null && kit.SourceFile != null ? kit.SourceFile : Path.Combine(Dir, Sanitize(kit.Name) + ".json");
             File.WriteAllText(path, JsonConvert.SerializeObject(kit, Formatting.Indented));
             return path;
         }
 
         public static void Delete(BotKit kit)
         {
-            string path = Path.Combine(Dir, Sanitize(kit.Name) + ".json");
+            string path = kit.Pack != null && kit.SourceFile != null ? kit.SourceFile : Path.Combine(Dir, Sanitize(kit.Name) + ".json");
             if (File.Exists(path))
             {
                 File.Delete(path);

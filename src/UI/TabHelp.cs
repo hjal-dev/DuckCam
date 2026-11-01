@@ -67,6 +67,10 @@ namespace DuckCam.UI
                 "1. Save Scene Preset stores the whole look: effects, lens, frame, time, weather, text and lights.\n"
                 + "2. Load a preset to get it back; the camera and lights load in place on the same map.\n"
                 + "3. Reset puts everything back to default without leaving DuckCam.",
+            ["addons"] = () =>
+                "1. Open the Add-on Creator and make a pack on the left, with your name as the author.\n"
+                + "2. Pick a kind of content at the top, tick your own items and press Move or Copy to add them to the pack.\n"
+                + "3. Tick one item to rename it. Share the pack by zipping its folders.",
             ["capture"] = () =>
                 "1. Take Screenshot (" + K(DuckCamConfig.ScreenshotKey) + ") saves a PNG with the UI hidden.\n"
                 + "2. Photo Resolution goes up to 16K; Transparent Background keeps only the characters.\n"

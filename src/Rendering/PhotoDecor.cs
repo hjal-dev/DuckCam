@@ -57,6 +57,7 @@ namespace DuckCam.Rendering
         private Texture2D _maskTex;
         private string _maskKey;
         private GUIStyle _textStyle;
+        private Font _font;
 
         public bool Active => Texts.Count > 0 || Border != BorderStyle.None || Mask != DecorMask.None;
 
@@ -143,6 +144,7 @@ namespace DuckCam.Rendering
             {
                 _textStyle = new GUIStyle(GUI.skin.label) { wordWrap = false, richText = false, clipping = TextClipping.Overflow };
             }
+            _font = _textStyle.font != null ? _textStyle.font : GUI.skin.font;
             _textStyle.fontSize = Mathf.Clamp(Mathf.RoundToInt(frame.height * t.Size), 6, 400);
             _textStyle.fontStyle = t.Bold ? FontStyle.Bold : FontStyle.Normal;
             _textStyle.alignment = t.Align == 0 ? TextAnchor.MiddleLeft : (t.Align == 2 ? TextAnchor.MiddleRight : TextAnchor.MiddleCenter);
@@ -234,6 +236,206 @@ namespace DuckCam.Rendering
                 default:
                     return Mathf.Sqrt(u * u + v * v) - s;
             }
+        }
+
+        public void Bake(Texture2D photo, RectInt region)
+        {
+            if (!Active || region.width <= 0 || region.height <= 0)
+            {
+                return;
+            }
+            int width = photo.width;
+            Color32[] dst = photo.GetPixels32();
+            if (Mask != DecorMask.None)
+            {
+                BakeMask(dst, width, region);
+            }
+            if (Border != BorderStyle.None)
+            {
+                BakeBorder(dst, width, region);
+            }
+            foreach (DecorText t in Texts)
+            {
+                BakeText(dst, width, region, t);
+            }
+            photo.SetPixels32(dst);
+            photo.Apply();
+        }
+
+        private void BakeMask(Color32[] dst, int width, RectInt region)
+        {
+            float aspect = (float)region.width / region.height;
+            float soft = Mathf.Max(0.001f, MaskSoftness * 0.5f);
+            Color c = Colors[Mathf.Clamp(MaskColor, 0, Colors.Length - 1)];
+            for (int y = 0; y < region.height; y++)
+            {
+                float v = (y + 0.5f) / region.height * 2f - 1f;
+                int row = (region.y + y) * width + region.x;
+                for (int x = 0; x < region.width; x++)
+                {
+                    float u = (x + 0.5f) / region.width * 2f - 1f;
+                    float a = Mathf.Clamp01((SignedDistance(u, v, aspect) + soft) / (2f * soft)) * MaskOpacity;
+                    if (a > 0f)
+                    {
+                        Blend(ref dst[row + x], c, a);
+                    }
+                }
+            }
+        }
+
+        private void BakeBorder(Color32[] dst, int width, RectInt region)
+        {
+            int w = Mathf.Max(1, Mathf.RoundToInt(Mathf.Min(region.width, region.height) * BorderWidth));
+            int bottom = Border == BorderStyle.Polaroid ? Mathf.RoundToInt(w * 3.5f) : w;
+            Color c = Colors[Mathf.Clamp(BorderColor, 0, Colors.Length - 1)];
+            for (int y = 0; y < region.height; y++)
+            {
+                bool full = y < bottom || y >= region.height - w;
+                int row = (region.y + y) * width + region.x;
+                for (int x = 0; x < region.width; x++)
+                {
+                    if (full || x < w || x >= region.width - w)
+                    {
+                        Blend(ref dst[row + x], c, 1f);
+                    }
+                }
+            }
+        }
+
+        private void BakeText(Color32[] dst, int width, RectInt region, DecorText t)
+        {
+            Font font = _font != null ? _font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (string.IsNullOrEmpty(t.Text) || font == null)
+            {
+                return;
+            }
+            int size = Mathf.Clamp(Mathf.RoundToInt(region.height * t.Size), 6, 1200);
+            FontStyle style = t.Bold ? FontStyle.Bold : FontStyle.Normal;
+            font.RequestCharactersInTexture(t.Text + "Hg", size, style);
+            float textWidth = 0f;
+            foreach (char ch in t.Text)
+            {
+                if (font.GetCharacterInfo(ch, out CharacterInfo info, size, style))
+                {
+                    textWidth += info.advance;
+                }
+            }
+            font.GetCharacterInfo('H', out CharacterInfo cap, size, style);
+            font.GetCharacterInfo('g', out CharacterInfo desc, size, style);
+            int pad = Mathf.CeilToInt(size * 0.5f);
+            int rw = Mathf.CeilToInt(textWidth) + pad * 2;
+            int rh = cap.maxY - desc.minY + pad * 2;
+            if (rw <= 0 || rh <= 0)
+            {
+                return;
+            }
+            int baseline = pad - desc.minY;
+            Texture2D coverage = RenderCoverage(font, t.Text, size, style, rw, rh, pad, baseline);
+            if (coverage == null)
+            {
+                return;
+            }
+            try
+            {
+                Color32[] cov = coverage.GetPixels32();
+                float cx = region.x + t.X * region.width;
+                float cy = region.y + (1f - t.Y) * region.height;
+                float left = t.Align == 0 ? cx : (t.Align == 2 ? cx - textWidth : cx - textWidth * 0.5f);
+                int ox = Mathf.RoundToInt(left) - pad;
+                int oy = Mathf.RoundToInt(cy - (cap.maxY + desc.minY) * 0.5f) - baseline;
+                if (t.Shadow)
+                {
+                    int o = Mathf.Max(1, Mathf.RoundToInt(size * 0.06f));
+                    Color shadow = t.Color == 1 ? new Color(1f, 1f, 1f, 0.6f) : new Color(0f, 0f, 0f, 0.65f);
+                    Stamp(dst, width, region, cov, rw, rh, ox + o, oy - o, shadow, shadow.a * t.Opacity);
+                }
+                Stamp(dst, width, region, cov, rw, rh, ox, oy, Colors[Mathf.Clamp(t.Color, 0, Colors.Length - 1)], t.Opacity);
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(coverage);
+            }
+        }
+
+        private static Texture2D RenderCoverage(Font font, string text, int size, FontStyle style, int rw, int rh, int penX, int baseline)
+        {
+            Material mat = font.material;
+            if (mat == null)
+            {
+                return null;
+            }
+            RenderTexture rt = RenderTexture.GetTemporary(rw, rh, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            RenderTexture prev = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = rt;
+                GL.Clear(true, true, new Color(0f, 0f, 0f, 0f));
+                GL.PushMatrix();
+                GL.LoadPixelMatrix(0f, rw, 0f, rh);
+                mat.SetPass(0);
+                GL.Begin(GL.QUADS);
+                GL.Color(Color.white);
+                float pen = penX;
+                foreach (char ch in text)
+                {
+                    if (!font.GetCharacterInfo(ch, out CharacterInfo g, size, style))
+                    {
+                        continue;
+                    }
+                    float x0 = pen + g.minX;
+                    float x1 = pen + g.maxX;
+                    float y0 = baseline + g.minY;
+                    float y1 = baseline + g.maxY;
+                    GL.TexCoord(g.uvBottomLeft);
+                    GL.Vertex3(x0, y0, 0f);
+                    GL.TexCoord(g.uvTopLeft);
+                    GL.Vertex3(x0, y1, 0f);
+                    GL.TexCoord(g.uvTopRight);
+                    GL.Vertex3(x1, y1, 0f);
+                    GL.TexCoord(g.uvBottomRight);
+                    GL.Vertex3(x1, y0, 0f);
+                    pen += g.advance;
+                }
+                GL.End();
+                GL.PopMatrix();
+                var tex = new Texture2D(rw, rh, TextureFormat.RGBA32, false);
+                tex.ReadPixels(new Rect(0, 0, rw, rh), 0, 0, false);
+                tex.Apply(false);
+                return tex;
+            }
+            finally
+            {
+                RenderTexture.active = prev;
+                RenderTexture.ReleaseTemporary(rt);
+            }
+        }
+
+        private static void Stamp(Color32[] dst, int width, RectInt region, Color32[] cov, int rw, int rh, int ox, int oy, Color c, float opacity)
+        {
+            int x0 = Mathf.Max(ox, region.x);
+            int x1 = Mathf.Min(ox + rw, region.xMax);
+            int y0 = Mathf.Max(oy, region.y);
+            int y1 = Mathf.Min(oy + rh, region.yMax);
+            for (int y = y0; y < y1; y++)
+            {
+                int srcRow = (y - oy) * rw;
+                int dstRow = y * width;
+                for (int x = x0; x < x1; x++)
+                {
+                    float a = cov[srcRow + x - ox].r / 255f * opacity;
+                    if (a > 0f)
+                    {
+                        Blend(ref dst[dstRow + x], c, a);
+                    }
+                }
+            }
+        }
+
+        private static void Blend(ref Color32 p, Color c, float a)
+        {
+            p.r = (byte)Mathf.RoundToInt(Mathf.Lerp(p.r, c.r * 255f, a));
+            p.g = (byte)Mathf.RoundToInt(Mathf.Lerp(p.g, c.g * 255f, a));
+            p.b = (byte)Mathf.RoundToInt(Mathf.Lerp(p.b, c.b * 255f, a));
         }
 
         private static void Fill(Rect r, Color c)

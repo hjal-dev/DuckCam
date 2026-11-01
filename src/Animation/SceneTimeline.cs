@@ -274,7 +274,7 @@ namespace DuckCam.Animation
         public static string[] List()
         {
             return System.IO.Directory.Exists(Directory)
-                ? System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray()
+                ? ContentPacks.List(Directory)
                 : Array.Empty<string>();
         }
 
@@ -290,7 +290,8 @@ namespace DuckCam.Animation
                 }
             }
             var file = new SceneFile { Map = GameContext.LocationId, Duration = Duration, Loop = Loop, Fps = Fps, Camera = CameraKeys, Tracks = Tracks.Where(t => t.Keys.Count > 0).ToList() };
-            File.WriteAllText(Path.Combine(Directory, name + ".json"), JsonConvert.SerializeObject(file, Formatting.Indented));
+            File.WriteAllText(ContentPacks.FileOf(Directory, name), JsonConvert.SerializeObject(file, Formatting.Indented));
+            ContentPacks.Invalidate(Directory);
             return name;
         }
 
@@ -298,7 +299,7 @@ namespace DuckCam.Animation
         {
             try
             {
-                SceneFile file = JsonConvert.DeserializeObject<SceneFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                SceneFile file = JsonConvert.DeserializeObject<SceneFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
                 if (file == null)
                 {
                     return "empty file";

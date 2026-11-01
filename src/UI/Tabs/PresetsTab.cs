@@ -73,11 +73,11 @@ namespace DuckCam.UI
             {
                 _kit.Note("No presets yet. Set up a shot and press Save.");
             }
-            foreach (string preset in presets)
+            foreach (string preset in _kit.Packs(_presetPacks, ScenePresets.Directory, presets))
             {
-                if (_kit.ListRow(preset, "", "Load") == 0)
+                if (_kit.ListRow(_presetPacks.Show(preset), "", "Load") == 0)
                 {
-                    _presetMessage = $"'{preset}': " + ScenePresets.Load(_c, preset, _presetCamera, _presetLights);
+                    _presetMessage = $"'{ContentPacks.Display(preset)}': " + ScenePresets.Load(_c, preset, _presetCamera, _presetLights);
                     _kit.ClearBuffers();
                 }
             }

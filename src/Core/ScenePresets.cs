@@ -66,10 +66,10 @@ namespace DuckCam.Core
             {
                 return Array.Empty<string>();
             }
-            return System.IO.Directory.GetFiles(Directory, "*.json").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n).ToArray();
+            return ContentPacks.List(Directory);
         }
 
-        public static string Save(DuckCamController c, string name)
+        public static string Save(DuckCamController c, string name, string pack = null)
         {
             DepthOfFieldController dof = c.Dof;
             PhotoDecor d = c.Decor;
@@ -116,9 +116,9 @@ namespace DuckCam.Core
             file.CameraFov = pose.Fov;
             file.Lights = LightRigs.Capture(c.Lights.Lights, c.Camera.Camera != null ? c.Camera.Camera.transform : null, "Camera");
 
-            System.IO.Directory.CreateDirectory(Directory);
-            string path = Path.Combine(Directory, LightRigs.Sanitize(name) + ".json");
+            string path = ContentPacks.SaveFile(Directory, pack, LightRigs.Sanitize(name));
             File.WriteAllText(path, JsonConvert.SerializeObject(file, Formatting.Indented));
+            ContentPacks.Invalidate(Directory);
             return path;
         }
 
@@ -127,7 +127,7 @@ namespace DuckCam.Core
             ScenePresetFile file;
             try
             {
-                file = JsonConvert.DeserializeObject<ScenePresetFile>(File.ReadAllText(Path.Combine(Directory, name + ".json")));
+                file = JsonConvert.DeserializeObject<ScenePresetFile>(File.ReadAllText(ContentPacks.FileOf(Directory, name)));
             }
             catch (Exception ex)
             {

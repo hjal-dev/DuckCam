@@ -1044,6 +1044,8 @@ namespace DuckCam.UI
             Say(count > 0 ? $"{preset} ({(left ? "left" : "right")} hand)." : "No finger bones found on that hand.");
         }
 
+        private readonly PackFilter _posePacks = new PackFilter();
+
         private float DrawLibrary(float x, float y, float w)
         {
             GUI.Label(new Rect(x, y, 60f, 24f), "NAME", SpawnerWindow.Left(HudTheme.Label, wrap: false));
@@ -1070,7 +1072,23 @@ namespace DuckCam.UI
                 }
             }
             y += 28f;
-            string[] poses = PoseLibrary.List();
+            string[] allPoses = PoseLibrary.List();
+            _posePacks.Options(allPoses, PoseLibrary.Directory);
+            if (_posePacks.Active)
+            {
+                if (SpawnerWindow.Button(new Rect(x, y, w, 24f), "PACK: " + _posePacks.Label.ToUpperInvariant(), false))
+                {
+                    _posePacks.Cycle(allPoses, PoseLibrary.Directory);
+                    _page = 0;
+                }
+                y += 28f;
+                string packInfo = _posePacks.Info(PoseLibrary.Directory);
+                if (packInfo != null)
+                {
+                    y = Note(x, y, w, packInfo);
+                }
+            }
+            string[] poses = _posePacks.Apply(allPoses);
             int pages = Mathf.Max(1, Mathf.CeilToInt(poses.Length / (float)PosesPerPage));
             _page = Mathf.Clamp(_page, 0, pages - 1);
             if (poses.Length == 0)
@@ -1079,7 +1097,7 @@ namespace DuckCam.UI
             }
             foreach (string pose in poses.Skip(_page * PosesPerPage).Take(PosesPerPage))
             {
-                if (SpawnerWindow.Button(new Rect(x, y, w, 24f), pose, pose == _selectedPose))
+                if (SpawnerWindow.Button(new Rect(x, y, w, 24f), _posePacks.Show(pose), pose == _selectedPose))
                 {
                     _selectedPose = pose == _selectedPose ? null : pose;
                     _confirmDelete = null;
@@ -1102,7 +1120,7 @@ namespace DuckCam.UI
             if (_selectedPose != null && poses.Contains(_selectedPose))
             {
                 string[] acts = { "LOAD", "OVERWRITE", "RENAME", _confirmDelete == _selectedPose ? "SURE?" : "DELETE" };
-                float aw = (w - 12f) / acts.Length;
+                float aw = (w - (acts.Length - 1) * 4f) / acts.Length;
                 for (int i = 0; i < acts.Length; i++)
                 {
                     if (!SpawnerWindow.Button(new Rect(x + i * (aw + 4f), y, aw, 24f), acts[i], i == 3 && _confirmDelete == _selectedPose))
@@ -1114,7 +1132,7 @@ namespace DuckCam.UI
                         switch (i)
                         {
                             case 0:
-                                LoadFull(PoseLibrary.Load(_selectedPose), $"Loaded '{_selectedPose}'.");
+                                LoadFull(PoseLibrary.Load(_selectedPose), $"Loaded '{ContentPacks.Display(_selectedPose)}'.");
                                 break;
                             case 1:
                                 PoseLibrary.Save(Rig.Capture(_selectedPose));
@@ -1122,10 +1140,11 @@ namespace DuckCam.UI
                                 break;
                             case 2:
                                 string to = PoseLibrary.Clean(_poseName);
-                                if (PoseLibrary.Rename(_selectedPose, to))
+                                string renamed = PoseLibrary.Rename(_selectedPose, to);
+                                if (renamed != null)
                                 {
-                                    Say($"Renamed to '{to}'.");
-                                    _selectedPose = to;
+                                    Say($"Renamed to '{ContentPacks.Display(renamed)}'.");
+                                    _selectedPose = renamed;
                                 }
                                 else
                                 {
