@@ -57,8 +57,6 @@ DuckCam records MP4 through **FFmpeg**. Put `ffmpeg.exe` in `Your-SPT-Folder/Bep
 
 Replace `BepInEx/plugins/DuckCam/DuckCam.dll` with the new one. Your files in `Your-SPT-Folder/DuckCam/` stay. Settings in `BepInEx/config` stay too; keys you never changed move to new defaults automatically.
 
-**Coming from the old "SPT Photo Mode" build?** Delete `Your-SPT-Folder/BepInEx/plugins/SPT.PhotoMode/` first, or both load and fight over the same keys.
-
 ## Uninstall
 
 Delete `Your-SPT-Folder/BepInEx/plugins/DuckCam/`. Your photos and saved files stay in `Your-SPT-Folder/DuckCam/` until you delete that folder too.

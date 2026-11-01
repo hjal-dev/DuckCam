@@ -32,6 +32,8 @@ Watch any player or bot through their own eyes, or orbit them.
 | **Horizon Lock** | Keeps the horizon level while you fly |
 | **Near Clip / Far Clip** | How close and how far the camera draws. Lower Near Clip to get very close to a face |
 
+Tip: most portraits look better with a low Field of View. Zoom all the way in first, then move back until the subject fits.
+
 ## Limits
 
 | Row | What it does |
