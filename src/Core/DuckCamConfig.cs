@@ -57,6 +57,7 @@ namespace DuckCam.Core
         public static ConfigEntry<KeyboardShortcut> ToggleKey;
         public static ConfigEntry<KeyboardShortcut> UiToggleKey;
         public static ConfigEntry<KeyboardShortcut> ScreenshotKey;
+        public static ConfigEntry<KeyboardShortcut> GalleryKey;
         public static ConfigEntry<KeyboardShortcut> BotFreezeKey;
         public static ConfigEntry<bool> ProtectFrozenBots;
         public static ConfigEntry<bool> BookmarkKeys;
@@ -211,6 +212,7 @@ namespace DuckCam.Core
             ToggleKey = config.Bind(keys, "Toggle DuckCam (freeze)", new KeyboardShortcut(KeyCode.F6), "Enter/exit frozen DuckCam. During a live (unsnapped) session it freezes/unfreezes the scene instead.");
             UiToggleKey = config.Bind(keys, "Toggle DuckCam UI", new KeyboardShortcut(KeyCode.F11), "Show/hide the workspace (KappaCam used F10 for its menu; set F10 here if you prefer).");
             ScreenshotKey = config.Bind(keys, "Take screenshot", new KeyboardShortcut(KeyCode.P), "Capture a PNG without the DuckCam UI.");
+            GalleryKey = config.Bind(keys, "Open gallery", new KeyboardShortcut(KeyCode.G, KeyCode.LeftControl), "Open or close the photo and video gallery.");
             BotFreezeKey = config.Bind(keys, "Freeze bots only", new KeyboardShortcut(KeyCode.F9), "Freeze every bot in place (pose, AI, senses) while you and the rest of the raid keep going. Works with or without a DuckCam session. Press again to release them.");
             ProtectFrozenBots = config.Bind(keys, "Frozen bots are protected", true, "While \"Freeze bots only\" is on, bots take no damage. Off: you can shoot them, but they only react once released if they see you.");
             BookmarkKeys = config.Bind(keys, "Camera bookmarks (Alt+1-9)", true, "Alt+1-9 (top number row) recalls a camera bookmark, Alt+Shift+1-9 or Ctrl+Alt+1-9 stores one. While a path plays, Alt+1-9 cut between paths instead.");
@@ -388,6 +390,14 @@ namespace DuckCam.Core
                     PhotoLog.Info("Config migrated: live sessions start with mouse and WASD on the camera.");
                 }
                 layout.Value = 3;
+            }
+            if (layout.Value < 4)
+            {
+                if (GalleryKey.Value.MainKey == KeyCode.None)
+                {
+                    GalleryKey.Value = (KeyboardShortcut)GalleryKey.DefaultValue;
+                }
+                layout.Value = 4;
             }
         }
 

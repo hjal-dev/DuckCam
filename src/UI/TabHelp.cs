@@ -74,7 +74,8 @@ namespace DuckCam.UI
             ["capture"] = () =>
                 "1. Take Screenshot (" + K(DuckCamConfig.ScreenshotKey) + ") saves a PNG with the UI hidden.\n"
                 + "2. Photo Resolution goes up to 16K; Transparent Background keeps only the characters.\n"
-                + "3. Record Video (" + K(DuckCamConfig.VideoRecordKey) + ") needs FFmpeg; combine it with a camera path for smooth moves.",
+                + "3. Record Video (" + K(DuckCamConfig.VideoRecordKey) + ") needs FFmpeg; combine it with a camera path for smooth moves.\n"
+                + "4. Gallery (" + K(DuckCamConfig.GalleryKey) + ") shows your photos and videos: view, compare two, delete, or open the folder.",
             ["debug"] = () =>
                 "1. If something breaks, set Log level to Verbose, repeat the problem and press Copy Report.\n"
                 + "2. Send the report together with BepInEx/LogOutput.log."

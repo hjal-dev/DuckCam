@@ -142,7 +142,7 @@ namespace DuckCam.Core
                 {
                     _ui.PoseEditor.HandleKeys();
                 }
-                else if (UiVisible && !_ui.Spawner.Open && !_ui.Addons.Open)
+                else if (UiVisible && !_ui.Spawner.Open && !_ui.Addons.Open && !_ui.Gallery.Open)
                 {
                     _ui.HandleKeys();
                 }
@@ -937,6 +937,7 @@ namespace DuckCam.Core
             {
                 _ui.Spawner.Close();
                 _ui.Addons.Close();
+                _ui.Gallery.Close();
                 _ui.PoseEditor.Close();
                 _ui.Timeline.Close();
                 BotSpawns.DespawnSessionBots();
@@ -1003,6 +1004,11 @@ namespace DuckCam.Core
             if (DuckCamConfig.UiExit.Value.IsDown() && _ui.Addons.Open)
             {
                 _ui.Addons.Back();
+                return false;
+            }
+            if (DuckCamConfig.UiExit.Value.IsDown() && _ui.Gallery.Open)
+            {
+                _ui.Gallery.Back();
                 return false;
             }
             if (DuckCamConfig.UiExit.Value.IsDown() && _ui.PoseEditor.Open)
@@ -1077,6 +1083,18 @@ namespace DuckCam.Core
             if (DuckCamConfig.ScreenshotKey.Value.IsDown() || (menu && DuckCamConfig.UiPhoto.Value.IsDown()))
             {
                 TakeScreenshot();
+            }
+            if (DuckCamConfig.GalleryKey.Value.IsDown() && !PoseMode && !_ui.PoseEditor.Open && !_ui.Spawner.Open && !_ui.Addons.Open)
+            {
+                if (_ui.Gallery.Open)
+                {
+                    _ui.Gallery.Close();
+                }
+                else
+                {
+                    UiVisible = true;
+                    _ui.Gallery.Show();
+                }
             }
             if (aliases && Input.GetKeyDown(KeyCode.F)) Camera.ToggleOrbit();
             if (aliases && Input.GetKeyDown(KeyCode.T)) Camera.ToggleTripod();

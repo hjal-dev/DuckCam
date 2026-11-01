@@ -17,6 +17,10 @@ namespace DuckCam.UI
                 _c.TakeScreenshot();
             }
             DuckCamConfig.WriteSidecar.Value = _kit.Toggle("JSON Sidecar", DuckCamConfig.WriteSidecar.Value);
+            if (_kit.Action("Gallery", KeyName(DuckCamConfig.GalleryKey)))
+            {
+                Gallery.Show();
+            }
 
             _kit.Section("Resolution · Transparency");
             DuckCamConfig.PhotoResolution.Value = _kit.Enum("Photo Resolution", DuckCamConfig.PhotoResolution.Value, HiResRenderer.ResolutionNames);

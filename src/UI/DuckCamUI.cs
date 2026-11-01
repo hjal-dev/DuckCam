@@ -71,6 +71,7 @@ namespace DuckCam.UI
             PoseEditor = new PoseEditorWindow(controller);
             Timeline = new TimelineWindow(controller);
             Addons = new AddonCreatorWindow();
+            Gallery = new GalleryWindow();
             Register("CAMERA", "camera", DrawCamera);
             Register("MOTION", "motion", DrawMotion);
             Register("TIME", "time", DrawTime);
@@ -111,7 +112,7 @@ namespace DuckCam.UI
                     return false;
                 }
                 Vector3 m = Input.mousePosition;
-                return Spawner.PointerOver || Addons.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !Addons.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
+                return Spawner.PointerOver || Addons.PointerOver || Gallery.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !Addons.Open && !Gallery.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
             }
         }
 
@@ -231,6 +232,10 @@ namespace DuckCam.UI
                 {
                     Addons.Draw(vw, vh);
                 }
+                else if (Gallery.Open)
+                {
+                    Gallery.Draw(vw, vh);
+                }
                 else
                 {
                     bool panel = !PoseEditor.Open;
@@ -347,6 +352,8 @@ namespace DuckCam.UI
 
         public AddonCreatorWindow Addons { get; }
 
+        public GalleryWindow Gallery { get; }
+
         public void Scroll(float notches)
         {
             if (Spawner.Open)
@@ -357,6 +364,11 @@ namespace DuckCam.UI
             if (Addons.Open)
             {
                 Addons.Scroll(notches);
+                return;
+            }
+            if (Gallery.Open)
+            {
+                Gallery.Scroll(notches);
                 return;
             }
             if (Timeline.PointerOver)

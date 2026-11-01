@@ -124,6 +124,10 @@
       <HintPath>References\EFT_Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>References\EFT_Managed\UnityEngine.VideoModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>References\EFT_Managed\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
