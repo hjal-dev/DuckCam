@@ -98,7 +98,7 @@ namespace DuckCam.UI
             Vector2 br = GUIUtility.GUIToScreenPoint(new Vector2(win.xMax, win.yMax));
             _screenRect = new Rect(tl, br - tl);
 
-            HudTheme.Fill(win, new Color(0.025f, 0.025f, 0.03f, 0.96f));
+            HudTheme.Window(win);
             HudTheme.Border(win, HudTheme.P.LineBright);
             GUI.Label(new Rect(win.x + 24f, win.y + 10f, 900f, 36f), TargetMode ? "WARDROBE · " + _target.Name.ToUpperInvariant() : "BOT SPAWNER", Left(HudTheme.Title, wrap: false));
             if (Button(new Rect(win.xMax - 46f, win.y + 12f, 32f, 30f), "X", false))
@@ -286,7 +286,7 @@ namespace DuckCam.UI
                 bool hover = t.Contains(Event.current.mousePosition);
                 if (Event.current.type == EventType.Repaint)
                 {
-                    HudTheme.Fill(t, selected ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : new Color(0.4f, 0.08f, 0.08f, 0.35f));
+                    HudTheme.Fill(t, selected ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : HudTheme.P.Card);
                     HudTheme.Border(t, selected ? HudTheme.P.Highlight : HudTheme.P.Line);
                 }
                 if (item != null)
@@ -405,6 +405,19 @@ namespace DuckCam.UI
             {
                 _equippedOnly = !_equippedOnly;
                 _scroll = 0f;
+            }
+            if (TargetMode && _tab == WardrobeTab.Gear)
+            {
+                List<TogglableComponent> flips = Togglables();
+                for (int i = flips.Count - 1; i >= 0; i--)
+                {
+                    bool down = flips[i].On;
+                    bx -= 174f;
+                    if (Button(new Rect(bx, y, 170f, 32f), FlipName(flips[i]) + (down ? ": DOWN" : ": UP"), down))
+                    {
+                        Flip(i);
+                    }
+                }
             }
             if (TargetMode && _tab == WardrobeTab.Clothes)
             {
@@ -529,7 +542,7 @@ namespace DuckCam.UI
             bool hover = r.Contains(Event.current.mousePosition);
             if (Event.current.type == EventType.Repaint)
             {
-                HudTheme.Fill(r, selected ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : new Color(0.4f, 0.08f, 0.08f, 0.35f));
+                HudTheme.Fill(r, selected ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : HudTheme.P.Card);
                 if (selected)
                 {
                     HudTheme.Fill(new Rect(r.x, r.y, 3f, r.height), HudTheme.P.Highlight);
@@ -566,10 +579,10 @@ namespace DuckCam.UI
                 chosen = null;
             }
             IEnumerable<CatalogEntry> filtered = all;
-            if (!string.IsNullOrWhiteSpace(_search))
+            string[] tokens = SearchTokens();
+            if (tokens.Length > 0)
             {
-                string q = _search.Trim();
-                filtered = filtered.Where(e => (e.Name ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (e.Detail ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);
+                filtered = filtered.Where(e => MatchesAll((e.Name ?? "") + " " + (e.Detail ?? ""), tokens));
             }
             if (_equippedOnly)
             {
@@ -599,7 +612,7 @@ namespace DuckCam.UI
                 }
                 CatalogEntry entry = list[i - offset];
                 bool wearing = entry.Key == chosen || (chosen == null && wornTpl != null && entry.TemplateId == wornTpl);
-                Card(card, wearing, entry.Detail, entry.Name, entry.UserBuild);
+                Card(card, wearing, entry.Detail, entry.Name, entry.UserBuild, tokens);
                 DrawSprite(new Rect(card.x + 10f, card.y + 24f, card.width - 20f, card.width * 0.78f - 10f), entry.Icon);
                 if (GUI.Button(card, new GUIContent("", entry.Name), GUIStyle.none))
                 {
@@ -630,10 +643,10 @@ namespace DuckCam.UI
             }
             string currentId = customization.TryGetValue(part, out MongoID cur) ? cur.ToString() : null;
             IEnumerable<OutfitOption> filtered = OutfitOptions(part);
-            if (!string.IsNullOrWhiteSpace(_search))
+            string[] tokens = SearchTokens();
+            if (tokens.Length > 0)
             {
-                string q = _search.Trim();
-                filtered = filtered.Where(o => (o.Name ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (o.InternalName ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);
+                filtered = filtered.Where(o => MatchesAll((o.Name ?? "") + " " + (o.InternalName ?? ""), tokens));
             }
             if (_equippedOnly)
             {
@@ -645,7 +658,9 @@ namespace DuckCam.UI
                 OutfitOption option = list[i];
                 bool wearing = option.MainId == currentId;
                 Card(card, wearing, null, null, false);
-                GUI.Label(new Rect(card.x + 8f, card.y + 18f, card.width - 16f, card.height - 30f), option.Name, CardTitle);
+                var nameRect = new Rect(card.x + 8f, card.y + 18f, card.width - 16f, card.height - 30f);
+                Highlight(nameRect, option.Name, CardTitle, tokens);
+                GUI.Label(nameRect, option.Name, CardTitle);
                 if (GUI.Button(card, new GUIContent("", option.InternalName), GUIStyle.none) && !wearing)
                 {
                     var next = new Dictionary<EBodyModelPart, MongoID>(customization);
@@ -696,12 +711,12 @@ namespace DuckCam.UI
             }
         }
 
-        private static void Card(Rect card, bool wearing, string detail, string name, bool userBuild)
+        private static void Card(Rect card, bool wearing, string detail, string name, bool userBuild, string[] tokens = null)
         {
             bool hover = card.Contains(Event.current.mousePosition);
             if (Event.current.type == EventType.Repaint)
             {
-                HudTheme.Fill(card, wearing ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : new Color(0.35f, 0.07f, 0.07f, 0.35f));
+                HudTheme.Fill(card, wearing ? HudTheme.P.RowFillSelected : hover ? HudTheme.P.TabFillActive : HudTheme.P.Card);
                 HudTheme.Fill(new Rect(card.x, card.y, 4f, card.height), wearing ? HudTheme.P.Highlight : userBuild ? new Color(0.95f, 0.55f, 0.1f, 0.9f) : new Color(0.95f, 0.55f, 0.1f, 0.45f));
                 HudTheme.Border(card, wearing ? HudTheme.P.Highlight : HudTheme.P.Line);
             }
@@ -715,12 +730,16 @@ namespace DuckCam.UI
             }
             if (!string.IsNullOrEmpty(detail))
             {
-                GUI.Label(new Rect(card.x + 10f, card.y + 5f, card.width - badgeW - 22f, 16f), detail.ToUpperInvariant(), userBuild ? SmallHi : SmallNote);
+                var detailRect = new Rect(card.x + 10f, card.y + 5f, card.width - badgeW - 22f, 16f);
+                Highlight(detailRect, detail.ToUpperInvariant(), userBuild ? SmallHi : SmallNote, tokens);
+                GUI.Label(detailRect, detail.ToUpperInvariant(), userBuild ? SmallHi : SmallNote);
             }
             if (name != null)
             {
                 float top = card.y + 24f + card.width * 0.78f;
-                GUI.Label(new Rect(card.x + 6f, top, card.width - 12f, card.yMax - top - 4f), name.ToUpperInvariant(), CardText);
+                var nameRect = new Rect(card.x + 6f, top, card.width - 12f, card.yMax - top - 4f);
+                Highlight(nameRect, name.ToUpperInvariant(), CardText, tokens);
+                GUI.Label(nameRect, name.ToUpperInvariant(), CardText);
             }
         }
 
@@ -827,6 +846,126 @@ namespace DuckCam.UI
 
         private static GUIStyle SmallHi => _smallHi ?? (_smallHi = new GUIStyle(HudTheme.HudSmall) { alignment = TextAnchor.MiddleLeft, wordWrap = false, fontSize = Math.Max(9, HudTheme.Note.fontSize - 2), clipping = TextClipping.Clip });
 
+        private List<TogglableComponent> Togglables()
+        {
+            Item root = Equipment?.GetSlot(_slot)?.ContainedItem;
+            if (root == null)
+            {
+                return new List<TogglableComponent>();
+            }
+            try
+            {
+                return root.GetItemComponentsInChildren<TogglableComponent>(false).Where(t => t.Item != null).ToList();
+            }
+            catch (Exception)
+            {
+                return new List<TogglableComponent>();
+            }
+        }
+
+        private static string FlipName(TogglableComponent toggle)
+        {
+            Item item = toggle.Item;
+            if (item.GetItemComponent<NightVisionComponent>() != null || item.GetItemComponent<ThermalVisionComponent>() != null)
+            {
+                return "NVG";
+            }
+            if (item.GetItemComponent<FaceShieldComponent>() != null)
+            {
+                return "VISOR";
+            }
+            string name = item.ShortName.Localized();
+            return string.IsNullOrWhiteSpace(name) ? "FLIP" : name.ToUpperInvariant();
+        }
+
+        private void Flip(int index)
+        {
+            InventoryEquipment eq = Equipment;
+            Item root = eq?.GetSlot(_slot)?.ContainedItem;
+            List<TogglableComponent> flips = Togglables();
+            if (root == null || index < 0 || index >= flips.Count)
+            {
+                return;
+            }
+            TogglableComponent toggle = flips[index];
+            bool down = !toggle.On;
+            try
+            {
+                if (toggle.Set(down, false, true).Failed)
+                {
+                    toggle.On = down;
+                }
+            }
+            catch (Exception)
+            {
+                toggle.On = down;
+            }
+            _target.ChangeGear(_slot, root);
+            _changes++;
+            _targetEq = null;
+            _slotIcons.Clear();
+            MarkStageDirty();
+            _message = $"{FlipName(toggle)} flipped {(down ? "down" : "up")}. Only the look changes; nobody gets night vision or a visor effect.";
+        }
+
+        private static readonly Color MatchColor = new Color(1f, 1f, 1f, 0.2f);
+
+        private string[] SearchTokens() => (_search ?? "").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        private static bool MatchesAll(string text, string[] tokens)
+        {
+            foreach (string token in tokens)
+            {
+                if (text.IndexOf(token, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static void Highlight(Rect rect, string text, GUIStyle style, string[] tokens)
+        {
+            if (tokens == null || tokens.Length == 0 || string.IsNullOrEmpty(text) || Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+            var marked = new bool[text.Length];
+            bool any = false;
+            foreach (string token in tokens)
+            {
+                for (int at = text.IndexOf(token, StringComparison.OrdinalIgnoreCase); at >= 0; at = text.IndexOf(token, at + 1, StringComparison.OrdinalIgnoreCase))
+                {
+                    for (int k = at; k < at + token.Length && k < marked.Length; k++)
+                    {
+                        marked[k] = true;
+                        any = true;
+                    }
+                }
+            }
+            if (!any)
+            {
+                return;
+            }
+            var content = new GUIContent(text);
+            float lineHeight = style.lineHeight;
+            for (int k = 0; k < text.Length; k++)
+            {
+                if (!marked[k] || text[k] == '\n')
+                {
+                    continue;
+                }
+                Vector2 p = style.GetCursorPixelPosition(rect, content, k);
+                Vector2 q = style.GetCursorPixelPosition(rect, content, k + 1);
+                float width = Mathf.Abs(q.y - p.y) < 0.5f ? q.x - p.x : style.CalcSize(new GUIContent(text[k].ToString())).x;
+                if (width <= 0f)
+                {
+                    continue;
+                }
+                HudTheme.Fill(new Rect(p.x, p.y, width, lineHeight), MatchColor);
+            }
+        }
+
         private static GUIStyle _cardTitle;
 
         private static GUIStyle CardTitle => _cardTitle ?? (_cardTitle = new GUIStyle(HudTheme.Value) { alignment = TextAnchor.MiddleCenter, wordWrap = true, clipping = TextClipping.Clip });
@@ -887,7 +1026,7 @@ namespace DuckCam.UI
                     continue;
                 }
                 bool current = key == _lookKey;
-                HudTheme.Fill(row, current ? HudTheme.P.RowFillSelected : new Color(0.4f, 0.08f, 0.08f, 0.35f));
+                HudTheme.Fill(row, current ? HudTheme.P.RowFillSelected : HudTheme.P.Card);
                 if (current)
                 {
                     HudTheme.Fill(new Rect(row.x, row.y, 3f, row.height), HudTheme.P.Highlight);
