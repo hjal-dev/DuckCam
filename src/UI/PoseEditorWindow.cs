@@ -317,7 +317,7 @@ namespace DuckCam.UI
             {
                 var win = new Rect(20f, 64f, W, vh - 64f - 120f);
                 _screenRect = ToScreen(win);
-                HudTheme.Fill(win, new Color(0.03f, 0.03f, 0.035f, 0.95f));
+                HudTheme.Window(win);
                 HudTheme.Border(win, HudTheme.P.LineBright);
                 float y = DrawHeader(win);
                 float treeH = Mathf.Max(160f, (win.yMax - y) * 0.42f);

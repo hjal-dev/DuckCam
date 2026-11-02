@@ -133,7 +133,7 @@ namespace DuckCam.UI
             Vector2 br = GUIUtility.GUIToScreenPoint(new Vector2(win.xMax, win.yMax));
             _screenRect = new Rect(tl, br - tl);
 
-            HudTheme.Fill(win, new Color(0.03f, 0.03f, 0.035f, 0.97f));
+            HudTheme.Window(win);
             HudTheme.Border(win, HudTheme.P.LineBright);
             var title = new Rect(win.x, win.y, win.width, 40f);
             HudTheme.Fill(title, HudTheme.P.TabFill);

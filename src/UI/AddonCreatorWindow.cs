@@ -127,7 +127,7 @@ namespace DuckCam.UI
             _screenRect = new Rect(tl, br - tl);
             _hoverList = -1;
 
-            HudTheme.Fill(win, new Color(0.03f, 0.03f, 0.035f, 0.97f));
+            HudTheme.Window(win);
             HudTheme.Border(win, HudTheme.P.LineBright);
             var title = new Rect(win.x, win.y, win.width, 40f);
             HudTheme.Fill(title, HudTheme.P.TabFill);

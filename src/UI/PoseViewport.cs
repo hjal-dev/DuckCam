@@ -1745,7 +1745,7 @@ namespace DuckCam.UI
             _menuRect = new Rect(x, y, w, h);
             if (Event.current.type == EventType.Repaint)
             {
-                HudTheme.Fill(_menuRect, new Color(0.03f, 0.03f, 0.035f, 0.97f));
+                HudTheme.Window(_menuRect);
                 HudTheme.Border(_menuRect, HudTheme.P.LineBright);
             }
             GUI.Label(new Rect(x + 10f, y + 4f, w - 20f, 22f), _menuTitle, SpawnerWindow.Left(HudTheme.Section, wrap: false));
