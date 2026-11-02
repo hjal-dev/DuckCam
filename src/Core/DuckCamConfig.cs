@@ -164,6 +164,7 @@ namespace DuckCam.Core
 
         public static ConfigEntry<UiSide> PanelSide;
         public static ConfigEntry<UI.UiPalette> Palette;
+        public static ConfigEntry<string> CustomTheme;
         public static ConfigEntry<string> Language;
         public static ConfigEntry<bool> ConfirmExit;
         public static ConfigEntry<string> HiddenTabs;
@@ -329,6 +330,7 @@ namespace DuckCam.Core
             const string ui = "11. Interface";
             PanelSide = config.Bind(ui, "Panel side", UiSide.Right, "Which screen edge the DuckCam panel sits on.");
             Palette = config.Bind(ui, "Color scheme", UI.UiPalette.NeonRed, "NeonRed (red + cyan highlight), Acid (yellow + blue), Ice (cyan + red), Tarkov (khaki).");
+            CustomTheme = config.Bind(ui, "Custom theme", "", "Saved theme from DuckCam/Themes to use instead of the color scheme (empty = use the color scheme). Made in FRAME > Interface > Theme Editor.");
             Language = config.Bind(ui, "Language", Locale.BuiltIn, "Menu language. English is built in; other languages are JSON files in BepInEx/plugins/DuckCam/Locales or <SPT>/DuckCam/Locales, named by code (de.json -> de).");
             ConfirmExit = config.Bind(ui, "Ask before leaving DuckCam", true, "Leaving DuckCam (Esc, the toggle key or SESSION > End) first asks for confirmation: press the key again or Enter to leave, Backspace to stay.");
             HiddenTabs = config.Bind(ui, "Hidden tabs", "", "Tabs hidden from the tab bar (comma-separated tab ids). Change them in FRAME > Interface > Tabs.");

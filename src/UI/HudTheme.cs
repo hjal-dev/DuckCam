@@ -30,6 +30,12 @@ namespace DuckCam.UI
         public Color HighlightText;
         public Color KeyCap;
         public Color Hud;
+        public Color Card;
+        public Color WindowStart;
+        public Color WindowEnd;
+        public float GradientAngle = 180f;
+
+        public HudPalette Clone() => (HudPalette)MemberwiseClone();
     }
 
     internal static class HudTheme
@@ -83,7 +89,55 @@ namespace DuckCam.UI
         public static GUIStyle GridLabel;
 
         private static bool _assetsReady;
-        private static UiPalette _builtFor = (UiPalette)(-1);
+        private static string _builtFor;
+        private static HudPalette _preview;
+        private static int _previewVersion;
+        private static string _customKey;
+        private static HudPalette _custom;
+        private static float _customCheck;
+        private static Texture2D _windowTex;
+        private static string _windowKey;
+        private static readonly System.Collections.Generic.List<Texture2D> _styleTextures = new System.Collections.Generic.List<Texture2D>();
+
+        public static void SetPreview(HudPalette palette)
+        {
+            _preview = palette;
+            _previewVersion++;
+        }
+
+        public static void ReloadCustom()
+        {
+            _customKey = null;
+            _custom = null;
+        }
+
+        private static HudPalette Resolve(out string key)
+        {
+            if (_preview != null)
+            {
+                key = "preview:" + _previewVersion;
+                return _preview;
+            }
+            string custom = DuckCamConfig.CustomTheme.Value ?? "";
+            if (custom.Length > 0)
+            {
+                if (custom != _customKey || (_custom == null && Time.unscaledTime > _customCheck))
+                {
+                    _customKey = custom;
+                    _customCheck = Time.unscaledTime + 5f;
+                    ThemeFile file = Themes.Load(custom);
+                    _custom = file != null ? Themes.Build(file) : null;
+                }
+                if (_custom != null)
+                {
+                    key = "custom:" + custom;
+                    return _custom;
+                }
+            }
+            UiPalette wanted = DuckCamConfig.Palette.Value;
+            key = "base:" + wanted;
+            return null;
+        }
 
         public static void Ensure()
         {
@@ -93,16 +147,53 @@ namespace DuckCam.UI
                 LoadFonts();
                 BuildTextures();
             }
-            UiPalette wanted = DuckCamConfig.Palette.Value;
-            if (wanted != _builtFor)
+            HudPalette resolved = Resolve(out string key);
+            if (key != _builtFor)
             {
-                _builtFor = wanted;
-                P = PaletteFor(wanted);
+                _builtFor = key;
+                P = resolved ?? PaletteFor(DuckCamConfig.Palette.Value);
                 BuildStyles();
             }
         }
 
         public static HudPalette PaletteFor(UiPalette palette)
+        {
+            HudPalette p = BasePalette(palette);
+            p.Card = new Color(p.TabFillActive.r, p.TabFillActive.g, p.TabFillActive.b, 0.35f);
+            p.WindowStart = new Color(0.03f, 0.03f, 0.035f, 0.96f);
+            p.WindowEnd = p.WindowStart;
+            p.GradientAngle = 180f;
+            return p;
+        }
+
+        public static void Window(Rect r)
+        {
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+            if (P.WindowStart == P.WindowEnd)
+            {
+                Fill(r, P.WindowStart);
+                return;
+            }
+            string key = ThemeColors.ToHex(P.WindowStart) + ThemeColors.ToHex(P.WindowEnd) + P.GradientAngle.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
+            if (_windowTex == null || key != _windowKey)
+            {
+                if (_windowTex != null)
+                {
+                    UnityEngine.Object.Destroy(_windowTex);
+                }
+                _windowTex = ThemeColors.Gradient(P.WindowStart, P.WindowEnd, P.GradientAngle);
+                _windowKey = key;
+            }
+            Color prev = GUI.color;
+            GUI.color = Color.white;
+            GUI.DrawTexture(r, _windowTex, ScaleMode.StretchToFill, true);
+            GUI.color = prev;
+        }
+
+        private static HudPalette BasePalette(UiPalette palette)
         {
             switch (palette)
             {
@@ -262,8 +353,18 @@ namespace DuckCam.UI
             GridLabel = TextStyle(9, Mono ?? Regular, P.Hud, TextAnchor.UpperLeft);
 
             Field = TextStyle(15, Regular, P.Value, TextAnchor.MiddleCenter);
+            foreach (Texture2D old in _styleTextures)
+            {
+                if (old != null)
+                {
+                    UnityEngine.Object.Destroy(old);
+                }
+            }
+            _styleTextures.Clear();
             Field.normal.background = Solid(new Color(0f, 0f, 0f, 0.45f));
             Field.focused.background = Solid(new Color(P.Highlight.r, P.Highlight.g, P.Highlight.b, 0.25f));
+            _styleTextures.Add(Field.normal.background);
+            _styleTextures.Add(Field.focused.background);
             Field.focused.textColor = Color.white;
             Field.clipping = TextClipping.Clip;
         }
