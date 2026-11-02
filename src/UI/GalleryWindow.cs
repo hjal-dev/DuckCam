@@ -82,6 +82,7 @@ namespace DuckCam.UI
         public void Close()
         {
             Open = false;
+            _mode = Mode.Grid;
             ClearView();
             _gallery.Clear();
             _ticked.Clear();

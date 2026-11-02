@@ -84,6 +84,8 @@ namespace DuckCam.Core
         }
 
         private bool _guidePending;
+        private bool _galleryOnEnter;
+        private bool _galleryOnly;
 
         private void Update()
         {
@@ -96,6 +98,12 @@ namespace DuckCam.Core
             HandleSessionKeys();
             if (State != DuckCamState.Active)
             {
+                return;
+            }
+            if (_galleryOnly && !_ui.Gallery.Open)
+            {
+                _galleryOnly = false;
+                Exit("gallery closed");
                 return;
             }
 
@@ -390,6 +398,16 @@ namespace DuckCam.Core
                 }
             }
 
+            if (DuckCamConfig.GalleryKey.Value.IsDown() && State == DuckCamState.Inactive)
+            {
+                _galleryOnEnter = true;
+                TryStart(frozen: true);
+                if (_enterRoutine == null)
+                {
+                    _galleryOnEnter = false;
+                }
+            }
+
             if (DuckCamConfig.UnsnapKey.Value.IsDown())
             {
                 if (State == DuckCamState.Inactive)
@@ -560,6 +578,13 @@ namespace DuckCam.Core
                 _enteredAt = Time.unscaledTime;
                 State = DuckCamState.Active;
                 completed = true;
+                if (_galleryOnEnter && !_guidePending)
+                {
+                    _galleryOnly = true;
+                    UiVisible = true;
+                    _ui.Gallery.Show();
+                }
+                _galleryOnEnter = false;
                 if (_guidePending)
                 {
                     _guidePending = false;
@@ -574,6 +599,7 @@ namespace DuckCam.Core
                 _enterRoutine = null;
                 if (!completed)
                 {
+                    _galleryOnEnter = false;
                     PhotoLog.Warn("Enter failed, restoring.");
                     RestoreAll("enter aborted");
                 }
@@ -1069,8 +1095,9 @@ namespace DuckCam.Core
                 RequestExit("Esc");
                 return true;
             }
+            bool fullWindow = _ui.Spawner.Open || _ui.Addons.Open || _ui.Gallery.Open;
             if (DuckCamConfig.UiToggleKey.Value.IsDown()
-                || (DuckCamConfig.UiHide.Value.IsDown() && (menu || gameBlocked)))
+                || (DuckCamConfig.UiHide.Value.IsDown() && (menu || gameBlocked) && !fullWindow))
             {
                 UiVisible = !UiVisible;
                 InputContext.LeaveField();

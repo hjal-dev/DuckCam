@@ -66,6 +66,7 @@ namespace DuckCam
                 }
                 return;
             }
+            UI.MenuGallery.Tick();
             if (DuckCamController.Instance != null)
             {
                 return;
@@ -76,6 +77,11 @@ namespace DuckCam
                 world.gameObject.AddComponent<DuckCamController>();
                 PhotoLog.Verbose("DuckCam controller attached to GameWorld.");
             }
+        }
+
+        private void OnGUI()
+        {
+            UI.MenuGallery.Draw();
         }
 
         private void OnDestroy()
