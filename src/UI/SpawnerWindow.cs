@@ -12,13 +12,8 @@ using UnityEngine;
 
 namespace DuckCam.UI
 {
-    internal sealed class SpawnerWindow
+    internal sealed partial class SpawnerWindow
     {
-        private const float W = 1240f;
-        private const float H = 700f;
-        private const float Card = 104f;
-        private const float CardH = 122f;
-
         private readonly DuckCamController _c;
         private readonly BotSpawnService _service;
 
@@ -29,9 +24,14 @@ namespace DuckCam.UI
         private int _generation;
         private readonly Dictionary<EquipmentSlot, string> _choices = new Dictionary<EquipmentSlot, string>();
         private EquipmentSlot _slot = EquipmentSlot.FirstPrimaryWeapon;
+        private EFT.EBodyModelPart? _outfitPart;
+        private int _outfitScope;
+        private string _modPath;
+        private readonly Dictionary<string, List<OutfitOption>> _outfitCache = new Dictionary<string, List<OutfitOption>>();
+        private static readonly EFT.EBodyModelPart[] OutfitParts = { EFT.EBodyModelPart.Head, EFT.EBodyModelPart.Body, EFT.EBodyModelPart.Feet };
+        private static readonly string[] OutfitPartNames = { "Head", "Upper Body", "Lower Body" };
         private string _search = "";
         private float _scroll;
-        private bool _kitsTab;
         private string _kitName = "My kit";
         private List<BotKit> _kits;
         private string _confirmDelete;
@@ -88,6 +88,9 @@ namespace DuckCam.UI
                 _roleIndex = 0;
             }
             _kits = BotKits.LoadAll();
+            _overlay = false;
+            _outfitPart = null;
+            _tab = WeaponSlots.Contains(_slot) ? WardrobeTab.Weapons : WardrobeTab.Gear;
             if (_draft == null)
             {
                 Regenerate();
@@ -105,6 +108,7 @@ namespace DuckCam.UI
             _targetEq = null;
             InputContext.LeaveField();
             DestroyPreview();
+            _stage.Clear();
         }
 
         private PhotoActor _target;
@@ -120,15 +124,20 @@ namespace DuckCam.UI
                 return;
             }
             DestroyPreview();
+            _stage.Clear();
             _target = actor;
             _targetEq = null;
             _picking = false;
-            _kitsTab = false;
             _scroll = 0f;
             _previewYaw = 180f;
             ItemCatalog.Invalidate();
             _slotIcons.Clear();
-            _message = $"Editing {actor.Name}. Pick a slot, then an item.";
+            _modPath = null;
+            _outfitCache.Clear();
+            BeginLook(actor);
+            MarkStageDirty();
+            _outfitPart = EFT.EBodyModelPart.Body;
+            _message = $"Editing {actor.Name}. Pick clothes or gear on the left or with the tabs, then an item.";
             Open = true;
         }
 
@@ -170,16 +179,13 @@ namespace DuckCam.UI
                 }
             }
             _target.ChangeGear(slot, item);
+            _changes++;
+            MarkStageDirty();
             _targetEq = null;
             _slotIcons.Clear();
             _message = _target.ReloadError != null
                 ? $"{GearCatalog.SlotLabel(slot)}: {_target.ReloadError}"
                 : $"{GearCatalog.SlotLabel(slot)} {(item == null ? "emptied" : "set")}.";
-        }
-
-        public void Scroll(float notches)
-        {
-            _scroll = Mathf.Max(0f, _scroll - notches * 60f);
         }
 
         private SpawnRole Role => _roles != null && _roles.Count > 0 ? _roles[Mathf.Clamp(_roleIndex, 0, _roles.Count - 1)] : null;
@@ -221,6 +227,7 @@ namespace DuckCam.UI
 
         private void RebuildPreview()
         {
+            MarkStageDirty();
             if (_draft?.Profile == null || !Open)
             {
                 return;
@@ -269,15 +276,66 @@ namespace DuckCam.UI
             }
         }
 
+        private readonly WardrobeStage _stage = new WardrobeStage();
+        private float _stageDirtyAt = -1f;
+
+        private void MarkStageDirty()
+        {
+            _stageDirtyAt = Time.unscaledTime + 0.25f;
+        }
+
+        private void RefreshStage()
+        {
+            PlayerVisualRepresentation visual = null;
+            try
+            {
+                visual = TargetMode
+                    ? (_target.Descriptor != null ? new PlayerVisualRepresentation(_target.Descriptor) : null)
+                    : _draft?.Profile?.GetVisualEquipmentState(true);
+            }
+            catch (Exception ex)
+            {
+                PhotoLog.Warn("Wardrobe preview: the look could not be read: " + ex.Message);
+            }
+            if (visual == null)
+            {
+                return;
+            }
+            try
+            {
+                visual = new PlayerVisualRepresentation(visual.Info, visual.Customization, visual.Equipment.CloneItem());
+            }
+            catch (Exception ex)
+            {
+                PhotoLog.Warn("Wardrobe preview: the look could not be copied: " + ex.Message);
+                return;
+            }
+            Player pmc = _c.Player;
+            Vector3 basePos = pmc != null ? pmc.Transform.position : Vector3.zero;
+            _stage.Show(visual, basePos + Vector3.down * 640f);
+        }
+
         public void LateTick()
         {
             if (!Open || _picking)
             {
                 return;
             }
+            if (_stageDirtyAt > 0f && Time.unscaledTime >= _stageDirtyAt)
+            {
+                _stageDirtyAt = -1f;
+                RefreshStage();
+            }
             Transform subjectRoot;
             int subjectLayer;
-            if (TargetMode)
+            bool staged = _stage.Ready;
+            if (staged)
+            {
+                _preview?.Tick();
+                subjectRoot = _stage.Model;
+                subjectLayer = WardrobeStage.Layer;
+            }
+            else if (TargetMode)
             {
                 if (_target.Status != ActorStatus.Ready || _target.Root == null)
                 {
@@ -304,7 +362,7 @@ namespace DuckCam.UI
             }
             if (_previewRt == null)
             {
-                _previewRt = new RenderTexture(400, 600, 24, RenderTextureFormat.ARGB32) { name = "DuckCam_SpawnerPreview" };
+                _previewRt = new RenderTexture(1080, 1620, 24, RenderTextureFormat.ARGB32) { name = "DuckCam_SpawnerPreview" };
                 _previewRt.Create();
             }
             if (_previewCam == null)
@@ -313,151 +371,95 @@ namespace DuckCam.UI
                 var cam = _previewCam.AddComponent<UnityEngine.Camera>();
                 cam.enabled = false;
                 cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = new Color(0.05f, 0.05f, 0.06f, 1f);
+                cam.backgroundColor = new Color(0.035f, 0.035f, 0.04f, 1f);
                 cam.fieldOfView = 30f;
                 cam.nearClipPlane = 0.1f;
                 cam.farClipPlane = 12f;
-                var light = new GameObject("DuckCam_SpawnerPreviewLight").AddComponent<Light>();
-                light.transform.SetParent(_previewCam.transform, false);
-                light.type = LightType.Point;
-                light.range = 10f;
-                light.intensity = 1.6f;
+                _previewLights = new[]
+                {
+                    StudioLight("Key", new Vector3(28f, 32f, 0f), 1.35f, new Color(1f, 0.95f, 0.88f)),
+                    StudioLight("Fill", new Vector3(12f, -48f, 0f), 0.5f, new Color(0.8f, 0.87f, 1f)),
+                    StudioLight("Rim", new Vector3(18f, 165f, 0f), 1.1f, Color.white)
+                };
             }
             var c = _previewCam.GetComponent<UnityEngine.Camera>();
             c.cullingMask = 1 << subjectLayer;
             c.targetTexture = _previewRt;
             Transform root = subjectRoot;
-            Vector3 focus = root.position + Vector3.up * 0.95f;
+            float close = Mathf.InverseLerp(4.2f, 1.1f, _previewDist);
+            Vector3 focus = root.position + Vector3.up * Mathf.Lerp(0.95f, 1.55f, close);
             Vector3 front = Vector3.forward;
-            if (TargetMode)
+            if (TargetMode || staged)
             {
                 Vector3 facing = Vector3.ProjectOnPlane(root.forward, Vector3.up).normalized;
                 front = Quaternion.AngleAxis(_previewYaw - 180f, Vector3.up) * (facing.sqrMagnitude > 0.01f ? facing : Vector3.forward);
             }
-            Vector3 eye = focus + front * 4.2f + Vector3.up * 0.1f;
+            Vector3 eye = focus + front * _previewDist + Vector3.up * 0.1f;
             _previewCam.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(focus - eye, Vector3.up));
+            _renderLayer = subjectLayer;
+            _renderPending = true;
+        }
+
+        private int _renderLayer;
+        private bool _renderPending;
+        private int _renderedFrame = -1;
+
+        private void RenderPreview()
+        {
+            if (!_renderPending || _renderedFrame == Time.frameCount || _previewCam == null)
+            {
+                return;
+            }
+            _renderedFrame = Time.frameCount;
+            if (_stage.Ready)
+            {
+                _stage.Tick(Time.unscaledDeltaTime, Time.deltaTime <= 0f);
+            }
+            var c = _previewCam.GetComponent<UnityEngine.Camera>();
+            UnityEngine.Rendering.AmbientMode ambientMode = RenderSettings.ambientMode;
+            Color ambientLight = RenderSettings.ambientLight;
+            float ambientIntensity = RenderSettings.ambientIntensity;
             try
             {
+                foreach (Light l in _previewLights)
+                {
+                    l.cullingMask = 1 << _renderLayer;
+                    l.enabled = true;
+                }
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = new Color(0.32f, 0.32f, 0.34f);
+                RenderSettings.ambientIntensity = 1f;
                 c.Render();
             }
             catch (Exception ex)
             {
                 PhotoLog.WarnOnce("spawnerpreview", "Spawner preview render failed: " + ex.Message);
             }
+            finally
+            {
+                foreach (Light l in _previewLights)
+                {
+                    l.enabled = false;
+                }
+                RenderSettings.ambientMode = ambientMode;
+                RenderSettings.ambientLight = ambientLight;
+                RenderSettings.ambientIntensity = ambientIntensity;
+            }
         }
 
-        public void Draw(float vw, float vh)
+        private Light[] _previewLights = new Light[0];
+
+        private Light StudioLight(string name, Vector3 euler, float intensity, Color color)
         {
-            if (!Open)
-            {
-                return;
-            }
-            if (_picking)
-            {
-                DrawPicker(vw, vh);
-                return;
-            }
-            _lastDrawFrame = Time.frameCount;
-            var win = new Rect(Mathf.Round((vw - W) * 0.5f), Mathf.Round((vh - H) * 0.5f), W, H);
-            Vector2 tl = GUIUtility.GUIToScreenPoint(new Vector2(win.x, win.y));
-            Vector2 br = GUIUtility.GUIToScreenPoint(new Vector2(win.xMax, win.yMax));
-            _screenRect = new Rect(tl, br - tl);
-
-            HudTheme.Fill(win, new Color(0.03f, 0.03f, 0.035f, 0.97f));
-            HudTheme.Border(win, HudTheme.P.LineBright);
-            var title = new Rect(win.x, win.y, win.width, 40f);
-            HudTheme.Fill(title, HudTheme.P.TabFill);
-            GUI.Label(new Rect(title.x + 14f, title.y + 6f, 700f, 30f), TargetMode ? "GEAR · " + _target.Name.ToUpperInvariant() : "BOT SPAWNER", Left(HudTheme.Title, wrap: false));
-            if (Button(new Rect(win.xMax - 40f, win.y + 6f, 30f, 28f), "X", false))
-            {
-                Close();
-                return;
-            }
-
-            float top = win.y + 50f;
-            float bottom = win.yMax - 70f;
-            DrawPreview(new Rect(win.x + 12f, top, 300f, bottom - top));
-            DrawSlots(new Rect(win.x + 324f, top, 300f, bottom - top));
-            var right = new Rect(win.x + 636f, top, win.width - 648f, bottom - top);
-            if (TargetMode)
-            {
-                DrawItems(right);
-                var bar = new Rect(win.x + 12f, bottom + 10f, win.width - 24f, 50f);
-                HudTheme.Fill(bar, HudTheme.P.TabFill);
-                GUI.Label(new Rect(bar.x + 12f, bar.y + 5f, bar.width - 24f, 20f), _message, Left(HudTheme.Note, wrap: false));
-                GUI.Label(new Rect(bar.x + 12f, bar.y + 25f, bar.width - 24f, 20f), "Items are display-only copies; nobody's inventory changes. Esc or Done closes.", Left(HudTheme.Note, wrap: false));
-                return;
-            }
-            if (Button(new Rect(right.x, right.y, 140f, 28f), "ITEMS", !_kitsTab)) _kitsTab = false;
-            if (Button(new Rect(right.x + 146f, right.y, 140f, 28f), $"KITS ({_kits?.Count ?? 0})", _kitsTab)) _kitsTab = true;
-            var body = new Rect(right.x, right.y + 36f, right.width, right.height - 36f);
-            if (_kitsTab)
-            {
-                DrawKits(body);
-            }
-            else
-            {
-                DrawItems(body);
-            }
-            DrawBottom(new Rect(win.x + 12f, bottom + 10f, win.width - 24f, 50f));
-        }
-
-        private void DrawPreview(Rect r)
-        {
-            HudTheme.Fill(r, HudTheme.P.RowFill);
-            if (TargetMode)
-            {
-                var full = new Rect(r.x, r.y, r.width, r.height);
-                if (_previewRt != null)
-                {
-                    GUI.DrawTexture(full, _previewRt, ScaleMode.ScaleAndCrop);
-                    if (_target.Reloading)
-                    {
-                        GUI.Label(new Rect(full.x + 8f, full.y + 6f, full.width, 22f), "Updating...", HudTheme.HudSmall);
-                    }
-                }
-                Event te = Event.current;
-                if (te.type == EventType.MouseDrag && full.Contains(te.mousePosition))
-                {
-                    _previewYaw -= te.delta.x * 0.6f;
-                    te.Use();
-                }
-                GUI.Label(new Rect(full.x + 8f, full.yMax - 24f, full.width, 20f), "Drag to look around", HudTheme.HudSmall);
-                return;
-            }
-            var view = new Rect(r.x, r.y, r.width, r.height - 96f);
-            if (_previewRt != null && _preview?.Status == ActorStatus.Ready)
-            {
-                GUI.DrawTexture(view, _previewRt, ScaleMode.ScaleAndCrop);
-                if (_preview.Reloading)
-                {
-                    GUI.Label(new Rect(view.x + 8f, view.y + 6f, view.width, 22f), "Updating...", HudTheme.HudSmall);
-                }
-            }
-            else
-            {
-                string text = _generating ? "Generating bot..." : _preview?.Status == ActorStatus.Loading ? "Loading model..." : (_preview?.Error ?? "No preview");
-                GUI.Label(new Rect(view.x, view.center.y - 12f, view.width, 24f), text, Centered(HudTheme.Note));
-            }
-            Event e = Event.current;
-            if (e.type == EventType.MouseDrag && view.Contains(e.mousePosition))
-            {
-                _previewYaw -= e.delta.x * 0.6f;
-                e.Use();
-            }
-            GUI.Label(new Rect(view.x + 8f, view.yMax - 24f, view.width, 20f), "Drag to turn", HudTheme.HudSmall);
-
-            float y = view.yMax + 8f;
-            SpawnRole role = Role;
-            GUI.Label(new Rect(r.x + 8f, y, r.width - 16f, 20f), role != null ? role.Group.ToUpperInvariant() : "", HudTheme.HudSmall);
-            if (Button(new Rect(r.x + 8f, y + 22f, 30f, 28f), "<", false)) StepRole(-1);
-            GUI.Label(new Rect(r.x + 42f, y + 24f, r.width - 84f, 26f), role?.Name ?? "-", Centered(HudTheme.Value));
-            if (Button(new Rect(r.xMax - 38f, y + 22f, 30f, 28f), ">", false)) StepRole(1);
-            if (Button(new Rect(r.x + 8f, y + 56f, r.width * 0.5f - 12f, 28f), "Group >", false)) StepGroup();
-            if (Button(new Rect(r.x + r.width * 0.5f + 4f, y + 56f, r.width * 0.5f - 12f, 28f), _generating ? "..." : "Reroll", false) && !_generating)
-            {
-                Regenerate();
-            }
+            var light = new GameObject("DuckCam_SpawnerPreview" + name).AddComponent<Light>();
+            light.transform.SetParent(_previewCam.transform, false);
+            light.transform.localRotation = Quaternion.Euler(euler);
+            light.type = LightType.Directional;
+            light.intensity = intensity;
+            light.color = color;
+            light.shadows = LightShadows.None;
+            light.enabled = false;
+            return light;
         }
 
         private void StepRole(int dir)
@@ -487,149 +489,6 @@ namespace DuckCam.UI
                 }
             }
             Regenerate();
-        }
-
-        private void DrawSlots(Rect r)
-        {
-            HudTheme.Fill(r, HudTheme.P.RowFill);
-            float rowH = (r.height - 70f) / GearCatalog.Slots.Length;
-            float y = r.y + 4f;
-            InventoryEquipment eq = Equipment;
-            foreach (EquipmentSlot s in GearCatalog.Slots)
-            {
-                var row = new Rect(r.x + 4f, y, r.width - 8f, rowH - 3f);
-                bool selected = s == _slot;
-                HudTheme.Fill(row, selected ? HudTheme.P.RowFillSelected : new Color(0f, 0f, 0f, 0.25f));
-                if (selected)
-                {
-                    HudTheme.Border(row, HudTheme.P.Highlight);
-                }
-                Item item = eq?.GetSlot(s)?.ContainedItem;
-                var iconRect = new Rect(row.x + 4f, row.y + 3f, rowH * 1.4f, row.height - 6f);
-                HudTheme.Fill(iconRect, new Color(0f, 0f, 0f, 0.35f));
-                if (item != null)
-                {
-                    DrawSprite(iconRect, SlotIcon(item));
-                }
-                float tx = iconRect.xMax + 8f;
-                string state = _choices.TryGetValue(s, out string key) ? (key == BotKits.None ? "  · empty" : "  · chosen") : "";
-                GUI.Label(new Rect(tx, row.y + 1f, row.xMax - tx - 4f, 16f), GearCatalog.SlotLabel(s).ToUpperInvariant() + state, Left(HudTheme.HudSmall, wrap: false));
-                GUI.Label(new Rect(tx, row.y + 16f, row.xMax - tx - 4f, row.height - 17f), item != null ? item.LocalizedName() : "(empty)", Left(HudTheme.Note, wrap: false));
-                if (GUI.Button(row, GUIContent.none, GUIStyle.none))
-                {
-                    _slot = s;
-                    _scroll = 0f;
-                    _kitsTab = false;
-                }
-                y += rowH;
-            }
-            float by = r.yMax - 62f;
-            if (Button(new Rect(r.x + 4f, by, r.width * 0.5f - 6f, 28f), "Empty Slot", false))
-            {
-                Choose(_slot, BotKits.None);
-            }
-            if (TargetMode)
-            {
-                if (Button(new Rect(r.x + r.width * 0.5f + 2f, by, r.width * 0.5f - 6f, 28f), "Reset Gear", false))
-                {
-                    _target.ResetGear();
-                    _targetEq = null;
-                    _slotIcons.Clear();
-                    _message = "Gear back to how this character started.";
-                }
-                if (Button(new Rect(r.x + 4f, by + 32f, r.width - 8f, 28f), "Done", true))
-                {
-                    Close();
-                }
-                return;
-            }
-            if (Button(new Rect(r.x + r.width * 0.5f + 2f, by, r.width * 0.5f - 6f, 28f), "Use Generated", false))
-            {
-                _choices.Remove(_slot);
-                Regenerate();
-            }
-            if (Button(new Rect(r.x + 4f, by + 32f, r.width - 8f, 28f), "Reset All Slots", false))
-            {
-                _choices.Clear();
-                Regenerate();
-            }
-        }
-
-        private void DrawItems(Rect r)
-        {
-            HudTheme.Fill(r, HudTheme.P.RowFill);
-            var searchRect = new Rect(r.xMax - 268f, r.y + 5f, 260f, 26f);
-            HudTheme.Fill(searchRect, new Color(0f, 0f, 0f, 0.55f));
-            HudTheme.Border(searchRect, HudTheme.P.LineBright);
-            GUI.SetNextControlName(HudKit.FieldPrefix + "SpawnerSearch");
-            string search = GUI.TextField(new Rect(searchRect.x + 6f, searchRect.y, searchRect.width - 12f, searchRect.height), _search ?? "", 64, Left(HudTheme.Field, wrap: false));
-            if (search != _search)
-            {
-                _search = search;
-                _scroll = 0f;
-            }
-            if (string.IsNullOrEmpty(_search) && GUI.GetNameOfFocusedControl() != HudKit.FieldPrefix + "SpawnerSearch")
-            {
-                GUI.Label(new Rect(searchRect.x + 8f, searchRect.y, searchRect.width - 16f, searchRect.height), "Search...", Left(HudTheme.Note, wrap: false));
-            }
-
-            Slot slot = Equipment?.GetSlot(_slot);
-            if (slot == null)
-            {
-                GUI.Label(new Rect(r.x + 8f, r.y + 40f, r.width, 22f), _generating ? "Waiting for the bot..." : "This bot has no such slot.", HudTheme.Note);
-                return;
-            }
-            List<CatalogEntry> all = ItemCatalog.For(_slot, slot);
-            IEnumerable<CatalogEntry> filtered = all;
-            if (!string.IsNullOrWhiteSpace(_search))
-            {
-                string q = _search.Trim();
-                filtered = all.Where(e => (e.Name ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (e.Detail ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-            List<CatalogEntry> list = filtered.ToList();
-
-            var grid = new Rect(r.x + 6f, r.y + 38f, r.width - 12f, r.height - 44f);
-            int cols = Mathf.Max(1, Mathf.FloorToInt(grid.width / (Card + 6f)));
-            int rows = Mathf.CeilToInt(list.Count / (float)cols);
-            float content = rows * (CardH + 6f);
-            _scroll = Mathf.Clamp(_scroll, 0f, Mathf.Max(0f, content - grid.height));
-            int firstRow = Mathf.FloorToInt(_scroll / (CardH + 6f));
-            int visibleRows = Mathf.CeilToInt(grid.height / (CardH + 6f)) + 1;
-            _choices.TryGetValue(_slot, out string chosen);
-
-            GUI.BeginGroup(grid);
-            for (int row = firstRow; row < Mathf.Min(rows, firstRow + visibleRows); row++)
-            {
-                for (int col = 0; col < cols; col++)
-                {
-                    int i = row * cols + col;
-                    if (i >= list.Count)
-                    {
-                        break;
-                    }
-                    CatalogEntry entry = list[i];
-                    var card = new Rect(col * (Card + 6f), row * (CardH + 6f) - _scroll, Card, CardH);
-                    bool isChosen = entry.Key == chosen;
-                    HudTheme.Fill(card, isChosen ? HudTheme.P.RowFillSelected : new Color(0f, 0f, 0f, 0.4f));
-                    HudTheme.Border(card, isChosen ? HudTheme.P.Highlight : HudTheme.P.Line);
-                    DrawSprite(new Rect(card.x + 6f, card.y + 6f, card.width - 12f, 62f), entry.Icon);
-                    if (!string.IsNullOrEmpty(entry.Detail))
-                    {
-                        GUI.Label(new Rect(card.x + 4f, card.y + 2f, card.width - 8f, 16f), entry.Detail, entry.UserBuild ? HudTheme.HudSmall : HudTheme.Note);
-                    }
-                    GUI.Label(new Rect(card.x + 4f, card.y + 70f, card.width - 8f, CardH - 72f), entry.Name, CardText);
-                    if (GUI.Button(card, new GUIContent("", entry.Name), GUIStyle.none))
-                    {
-                        Choose(_slot, entry.Key);
-                    }
-                }
-            }
-            GUI.EndGroup();
-            if (list.Count == 0)
-            {
-                GUI.Label(new Rect(grid.x, grid.y + 10f, grid.width, 22f), "Nothing matches.", HudTheme.Note);
-            }
-            GUI.Label(new Rect(r.x + 8f, r.y + 5f, r.width - 290f, 26f), $"ITEM DATABASE · {GearCatalog.SlotLabel(_slot).ToUpperInvariant()} · {list.Count} items", Left(HudTheme.HudSmall, wrap: false));
         }
 
         private void Choose(EquipmentSlot slot, string key)
@@ -719,42 +578,6 @@ namespace DuckCam.UI
             GUI.EndGroup();
         }
 
-        private void DrawBottom(Rect r)
-        {
-            HudTheme.Fill(r, HudTheme.P.TabFill);
-            float x = r.x + 10f;
-            GUI.Label(new Rect(x, r.y + 14f, 60f, 22f), "COUNT", HudTheme.HudSmall);
-            x += 58f;
-            if (Button(new Rect(x, r.y + 11f, 28f, 28f), "-", false)) _count = Mathf.Max(1, _count - 1);
-            GUI.Label(new Rect(x + 30f, r.y + 13f, 36f, 24f), _count.ToString(CultureInfo.InvariantCulture), Centered(HudTheme.Value));
-            if (Button(new Rect(x + 68f, r.y + 11f, 28f, 28f), "+", false)) _count = Mathf.Min(10, _count + 1);
-            x += 112f;
-            _sessionOnly = Check(new Rect(x, r.y + 11f, 190f, 28f), "Only in this session", _sessionOnly);
-            x += 198f;
-            _infiniteAmmo = Check(new Rect(x, r.y + 11f, 150f, 28f), "Infinite ammo", _infiniteAmmo);
-            x += 158f;
-            GUI.Label(new Rect(x, r.y + 14f, 90f, 22f), "SPARE MAGS", HudTheme.HudSmall);
-            x += 92f;
-            if (Button(new Rect(x, r.y + 11f, 28f, 28f), "-", false)) _spareMags = Mathf.Max(0, _spareMags - 1);
-            GUI.Label(new Rect(x + 30f, r.y + 13f, 30f, 24f), _spareMags.ToString(CultureInfo.InvariantCulture), Centered(HudTheme.Value));
-            if (Button(new Rect(x + 62f, r.y + 11f, 28f, 28f), "+", false)) _spareMags = Mathf.Min(8, _spareMags + 1);
-            x += 100f;
-            var status = new Rect(x, r.y + 5f, r.xMax - x - 370f, 20f);
-            GUI.Label(status, new GUIContent(_message, _message), Left(HudTheme.Note, wrap: false));
-            if (!string.IsNullOrEmpty(_service.Status) && _service.Status != _message)
-            {
-                GUI.Label(new Rect(status.x, status.y + 20f, status.width, 20f), new GUIContent(_service.Status, _service.Status), Left(HudTheme.Note, wrap: false));
-            }
-            if (Button(new Rect(r.xMax - 360f, r.y + 8f, 170f, 34f), "ADD TO PHOTO", false))
-            {
-                AddToPhoto();
-            }
-            if (Button(new Rect(r.xMax - 180f, r.y + 8f, 170f, 34f), _count > 1 ? $"PLACE x{_count}" : "PLACE & SPAWN", true))
-            {
-                SpawnCurrent();
-            }
-        }
-
         private BotKit CurrentKit(string name)
         {
             SpawnRole role = Role;
@@ -777,6 +600,11 @@ namespace DuckCam.UI
 
         public void Back()
         {
+            if (_overlay && !_picking)
+            {
+                _overlay = false;
+                return;
+            }
             if (_picking)
             {
                 _picking = false;
@@ -979,6 +807,134 @@ namespace DuckCam.UI
                 _message = "Saving the kit failed: " + ex.Message;
                 return false;
             }
+        }
+
+        private List<(string Path, string Label, Slot Slot)> ModSlots(Item root)
+        {
+            var into = new List<(string Path, string Label, Slot Slot)>();
+            WalkMods(root, "", "", into, 0);
+            return into;
+        }
+
+        private static void WalkMods(Item item, string path, string label, List<(string Path, string Label, Slot Slot)> into, int depth)
+        {
+            if (depth > 3 || !(item is CompoundItem compound) || compound.Slots == null)
+            {
+                return;
+            }
+            for (int i = 0; i < compound.Slots.Length; i++)
+            {
+                Slot s = compound.Slots[i];
+                if (s?.Filters == null || s.Filters.Length == 0 || IsArmorInsert(s.ID))
+                {
+                    continue;
+                }
+                string p = path + i;
+                string l = (label.Length > 0 ? label + " > " : "") + Pretty(s.ID);
+                into.Add((p, l, s));
+                if (s.ContainedItem != null)
+                {
+                    WalkMods(s.ContainedItem, p + "/", l, into, depth + 1);
+                }
+            }
+        }
+
+        private static bool IsArmorInsert(string id)
+        {
+            string s = (id ?? "").ToLowerInvariant();
+            return s.Contains("soft_armor") || s.Contains("plate") || s.StartsWith("helmet_", StringComparison.Ordinal) || s == "collar" || s.StartsWith("groin", StringComparison.Ordinal);
+        }
+
+        private static string Pretty(string id)
+        {
+            string s = (id ?? "slot").Replace("mod_", "").Replace('_', ' ').Trim();
+            s = s.TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9').Trim();
+            if (s.Length == 0)
+            {
+                return "Slot";
+            }
+            if (s.Equals("nvg", StringComparison.OrdinalIgnoreCase))
+            {
+                return "NVG / Mount";
+            }
+            return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(s.ToLowerInvariant());
+        }
+
+        private void AttachMod(string path, CatalogEntry entry)
+        {
+            InventoryEquipment eq = Equipment;
+            Item root = eq?.GetSlot(_slot)?.ContainedItem;
+            if (root == null)
+            {
+                _message = "Put an item in this slot first.";
+                return;
+            }
+            (string Path, string Label, Slot Slot) target = ModSlots(root).FirstOrDefault(m => m.Path == path);
+            if (target.Slot == null)
+            {
+                _message = "That attachment slot is gone; pick it again.";
+                _modPath = null;
+                return;
+            }
+            Item mod = null;
+            if (entry != null)
+            {
+                mod = ItemCatalog.CreateItem(entry);
+                if (mod == null)
+                {
+                    _message = "That item couldn't be created.";
+                    return;
+                }
+            }
+            if (target.Slot.ContainedItem != null)
+            {
+                target.Slot.RemoveItemWithoutRestrictions();
+            }
+            if (mod != null)
+            {
+                var added = target.Slot.AddWithoutRestrictions(mod);
+                if (added.Failed)
+                {
+                    _message = $"{target.Label}: could not fit it ({added.Error}).";
+                    _targetEq = null;
+                    return;
+                }
+            }
+            _target.ChangeGear(_slot, root);
+            _changes++;
+            MarkStageDirty();
+            _targetEq = null;
+            _slotIcons.Clear();
+            _message = _target.ReloadError != null
+                ? $"{target.Label}: {_target.ReloadError}"
+                : $"{target.Label} {(mod == null ? "emptied" : "attached")}.";
+        }
+
+        private List<OutfitOption> OutfitOptions(EFT.EBodyModelPart part)
+        {
+            EFT.EPlayerSide side = _target.Descriptor?.Info != null ? _target.Descriptor.Info.Side : EFT.EPlayerSide.Usec;
+            string key = $"{part}|{side}|{_outfitScope}";
+            if (!_outfitCache.TryGetValue(key, out List<OutfitOption> list))
+            {
+                var scope = (OutfitScope)_outfitScope;
+                list = part == EFT.EBodyModelPart.Head ? OutfitCatalog.Heads(side, scope)
+                    : part == EFT.EBodyModelPart.Body ? OutfitCatalog.Tops(side, scope)
+                    : OutfitCatalog.Lowers(side, scope);
+                _outfitCache[key] = list;
+            }
+            return list;
+        }
+
+        private string OutfitName(EFT.EBodyModelPart part)
+        {
+            Dictionary<EFT.EBodyModelPart, MongoID> customization = _target.Descriptor?.Customization;
+            if (customization == null || !customization.TryGetValue(part, out MongoID current))
+            {
+                return "(none)";
+            }
+            string id = current.ToString();
+            OutfitOption hit = OutfitOptions(part).FirstOrDefault(o => o.MainId == id);
+            return hit != null ? hit.Name : OutfitCatalog.Current(part, current).Name;
         }
 
         private Sprite SlotIcon(Item item)

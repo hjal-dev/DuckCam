@@ -67,6 +67,8 @@ namespace DuckCam.Spawning
     {
         private static readonly Dictionary<EquipmentSlot, List<CatalogEntry>> Cache = new Dictionary<EquipmentSlot, List<CatalogEntry>>();
 
+        private static readonly Dictionary<string, List<CatalogEntry>> ModCache = new Dictionary<string, List<CatalogEntry>>();
+
         public static bool IsWeaponSlot(EquipmentSlot slot) =>
             slot == EquipmentSlot.FirstPrimaryWeapon || slot == EquipmentSlot.SecondPrimaryWeapon || slot == EquipmentSlot.Holster;
 
@@ -75,6 +77,35 @@ namespace DuckCam.Spawning
         public static void Invalidate()
         {
             Cache.Clear();
+            ModCache.Clear();
+        }
+
+        public static int CachedCount(EquipmentSlot slot) => Cache.TryGetValue(slot, out List<CatalogEntry> list) ? list.Count : -1;
+
+        public static int CachedModCount(string key) => ModCache.TryGetValue(key, out List<CatalogEntry> list) ? list.Count : -1;
+
+        public static List<CatalogEntry> ForMod(string key, Slot slot)
+        {
+            if (ModCache.TryGetValue(key, out List<CatalogEntry> cached))
+            {
+                return cached;
+            }
+            var list = new List<CatalogEntry>();
+            ItemFactory factory = Factory;
+            if (factory != null && slot != null)
+            {
+                try
+                {
+                    list = Templates(factory).Where(t => Fits(factory, slot, t._id.ToString())).Select(t => FromTemplate(t, null))
+                        .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
+                }
+                catch (Exception ex)
+                {
+                    PhotoLog.Warn($"Item catalog for attachment slot {slot.ID} failed: {ex.Message}");
+                }
+            }
+            ModCache[key] = list;
+            return list;
         }
 
         public static List<CatalogEntry> For(EquipmentSlot slotName, Slot slot)

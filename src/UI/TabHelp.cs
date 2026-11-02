@@ -52,9 +52,9 @@ namespace DuckCam.UI
                 + "4. Spawn Bots adds real bots; Add Any Bot (photo only) adds a posable character that has no AI.\n"
                 + "5. Pose > Category > DuckCam lists the poses you saved.",
             ["outfit"] = () =>
-                "1. Choose a character, then change head, top and lower body.\n"
-                + "2. Gear: pick any slot and choose an item from the Item Database.\n"
-                + "3. Show / hide gear hides single slots; Reset Gear goes back to what they wore.",
+                "1. Choose a character and open the Wardrobe.\n"
+                + "2. CLOTHES, GEAR and WEAPONS tabs; a helmet's NVG, mount and visor slots are listed under it. Save looks with OUTFITS.\n"
+                + "3. Show / hide gear hides single slots; Reset Clothes and Reset Gear go back to what they wore.",
             ["overlays"] = () =>
                 "1. Frame and Stickers use PNG files from the Overlay Folder (each subfolder is a category).\n"
                 + "2. Text, Border and Mask are made in DuckCam and drawn inside the photo frame.\n"
