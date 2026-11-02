@@ -590,6 +590,34 @@ namespace DuckCam.Actors
             StartReload(visual);
         }
 
+        public void ApplyLook(Dictionary<EBodyModelPart, MongoID> customization, EFT.InventoryEquipmentDescriptor equipment)
+        {
+            if (Animator == null || Descriptor == null || _loader == null)
+            {
+                ReloadError = "character is not ready";
+                return;
+            }
+            if (customization != null)
+            {
+                Descriptor.Customization = new Dictionary<EBodyModelPart, MongoID>(customization);
+            }
+            if (equipment != null)
+            {
+                Descriptor.Equipment = equipment;
+            }
+            PlayerVisualRepresentation visual;
+            try
+            {
+                visual = new PlayerVisualRepresentation(Descriptor);
+            }
+            catch (Exception ex)
+            {
+                ReloadError = ex.Message;
+                return;
+            }
+            StartReload(visual);
+        }
+
         public EFT.InventoryEquipmentDescriptor OriginalEquipment { get; private set; }
 
         public EFT.InventoryLogic.InventoryEquipment CurrentEquipment()

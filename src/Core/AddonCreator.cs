@@ -32,7 +32,8 @@ namespace DuckCam.Core
             new ContentKind { Title = "Paths", Root = () => PathStorage.Directory, Keys = PathStorage.List },
             new ContentKind { Title = "Scenes", Root = () => SceneTimeline.Directory, Keys = SceneTimeline.List },
             new ContentKind { Title = "Characters", Root = () => SavedActors.Directory, Keys = SavedActors.List },
-            new ContentKind { Title = "Bot Kits", Root = () => BotKits.Dir, Keys = () => ContentPacks.List(BotKits.Dir) }
+            new ContentKind { Title = "Bot Kits", Root = () => BotKits.Dir, Keys = () => ContentPacks.List(BotKits.Dir) },
+            new ContentKind { Title = "Outfits", Root = () => Outfits.Directory, Keys = Outfits.List }
         };
 
         public static void Refresh(ContentKind kind)
