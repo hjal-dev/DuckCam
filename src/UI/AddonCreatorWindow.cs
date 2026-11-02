@@ -243,10 +243,15 @@ namespace DuckCam.UI
         private void DrawContent(Rect r)
         {
             int count = AddonCreator.Kinds.Length;
-            float bw = (r.width - (count - 1) * 4f) / count;
+            float[] widths = AddonCreator.Kinds.Select(k => HudTheme.BoxText.CalcSize(new GUIContent(k.Title.ToUpperInvariant())).x + 14f).ToArray();
+            float spare = (r.width - (count - 1) * 4f - widths.Sum()) / count;
+            float bx = r.x;
             for (int i = 0; i < count; i++)
             {
-                if (SpawnerWindow.Button(new Rect(r.x + i * (bw + 4f), r.y, bw, 28f), AddonCreator.Kinds[i].Title.ToUpperInvariant(), i == _kind))
+                float bw = widths[i] + spare;
+                var button = new Rect(bx, r.y, bw, 28f);
+                bx += bw + 4f;
+                if (SpawnerWindow.Button(button, AddonCreator.Kinds[i].Title.ToUpperInvariant(), i == _kind))
                 {
                     if (_kind != i)
                     {
