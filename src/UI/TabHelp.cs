@@ -62,7 +62,7 @@ namespace DuckCam.UI
             ["frame"] = () =>
                 "1. Grid and Horizon Line help composition; they never appear in photos.\n"
                 + "2. Frame picks an aspect ratio; Crop Photo To Frame saves exactly the area inside it.\n"
-                + "3. Interface: colours, panel side, Tabs (show or hide tabs), Keybinds, language and the Beginner Guide.",
+                + "3. Interface: colours and the Theme Editor (your own colours, saved as themes), panel side, Tabs, Keybinds, language and the Beginner Guide.",
             ["presets"] = () =>
                 "1. Save Scene Preset stores the whole look: effects, lens, frame, time, weather, text and lights.\n"
                 + "2. Load a preset to get it back; the camera and lights load in place on the same map.\n"

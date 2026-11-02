@@ -150,7 +150,7 @@ namespace DuckCam.Core
                 {
                     _ui.PoseEditor.HandleKeys();
                 }
-                else if (UiVisible && !_ui.Spawner.Open && !_ui.Addons.Open && !_ui.Gallery.Open)
+                else if (UiVisible && !_ui.Spawner.Open && !_ui.Addons.Open && !_ui.Gallery.Open && !_ui.ThemeEditor.Open)
                 {
                     _ui.HandleKeys();
                 }
@@ -964,6 +964,7 @@ namespace DuckCam.Core
                 _ui.Spawner.Close();
                 _ui.Addons.Close();
                 _ui.Gallery.Close();
+                _ui.ThemeEditor.Close();
                 _ui.PoseEditor.Close();
                 _ui.Timeline.Close();
                 BotSpawns.DespawnSessionBots();
@@ -1037,6 +1038,11 @@ namespace DuckCam.Core
                 _ui.Gallery.Back();
                 return false;
             }
+            if (DuckCamConfig.UiExit.Value.IsDown() && _ui.ThemeEditor.Open)
+            {
+                _ui.ThemeEditor.Back();
+                return false;
+            }
             if (DuckCamConfig.UiExit.Value.IsDown() && _ui.PoseEditor.Open)
             {
                 _ui.PoseEditor.Back();
@@ -1095,7 +1101,7 @@ namespace DuckCam.Core
                 RequestExit("Esc");
                 return true;
             }
-            bool fullWindow = _ui.Spawner.Open || _ui.Addons.Open || _ui.Gallery.Open;
+            bool fullWindow = _ui.Spawner.Open || _ui.Addons.Open || _ui.Gallery.Open || _ui.ThemeEditor.Open;
             if (DuckCamConfig.UiToggleKey.Value.IsDown()
                 || (DuckCamConfig.UiHide.Value.IsDown() && (menu || gameBlocked) && !fullWindow))
             {

@@ -72,6 +72,7 @@ namespace DuckCam.UI
             Timeline = new TimelineWindow(controller);
             Addons = new AddonCreatorWindow();
             Gallery = new GalleryWindow();
+            ThemeEditor = new ThemeEditorWindow();
             Register("CAMERA", "camera", DrawCamera);
             Register("MOTION", "motion", DrawMotion);
             Register("TIME", "time", DrawTime);
@@ -112,7 +113,7 @@ namespace DuckCam.UI
                     return false;
                 }
                 Vector3 m = Input.mousePosition;
-                return Spawner.PointerOver || Addons.PointerOver || Gallery.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !Addons.Open && !Gallery.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
+                return Spawner.PointerOver || Addons.PointerOver || Gallery.PointerOver || ThemeEditor.PointerOver || PoseEditor.PointerOver || Timeline.PointerOver || (!Spawner.Open && !Addons.Open && !Gallery.Open && !ThemeEditor.Open && !PoseEditor.Open && _uiScreenRect.Contains(new Vector2(m.x, Screen.height - m.y)));
             }
         }
 
@@ -236,6 +237,10 @@ namespace DuckCam.UI
                 {
                     Gallery.Draw(vw, vh);
                 }
+                else if (ThemeEditor.Open)
+                {
+                    ThemeEditor.Draw(vw, vh);
+                }
                 else
                 {
                     bool panel = !PoseEditor.Open;
@@ -354,6 +359,8 @@ namespace DuckCam.UI
 
         public GalleryWindow Gallery { get; }
 
+        public ThemeEditorWindow ThemeEditor { get; }
+
         public void Scroll(float notches)
         {
             if (Spawner.Open)
@@ -369,6 +376,11 @@ namespace DuckCam.UI
             if (Gallery.Open)
             {
                 Gallery.Scroll(notches);
+                return;
+            }
+            if (ThemeEditor.Open)
+            {
+                ThemeEditor.Scroll(notches);
                 return;
             }
             if (Timeline.PointerOver)

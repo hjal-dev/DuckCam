@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DuckCam.Core;
 using DuckCam.Rendering;
 using UnityEngine;
@@ -8,6 +9,10 @@ namespace DuckCam.UI
 {
     internal sealed partial class DuckCamUI
     {
+        private string[] _themeKeys = new string[0];
+
+        private float _themesListedAt = -10f;
+
         private void DrawFrame()
         {
             DuckCamConfig.Guides.Value = _kit.Enum("Grid", DuckCamConfig.Guides.Value, CompositionOverlay.GuideNames);
@@ -22,6 +27,24 @@ namespace DuckCam.UI
 
             _kit.Section("Interface");
             DuckCamConfig.Palette.Value = _kit.Enum("Color Scheme", DuckCamConfig.Palette.Value, new[] { "Neon Red", "Acid", "Ice", "Tarkov" });
+            if (Time.unscaledTime - _themesListedAt > 2f)
+            {
+                _themeKeys = Themes.List();
+                _themesListedAt = Time.unscaledTime;
+            }
+            string[] themeNames = new[] { "None (Color Scheme)" }.Concat(_themeKeys.Select(Core.ContentPacks.Display)).ToArray();
+            string activeTheme = DuckCamConfig.CustomTheme.Value ?? "";
+            int themeIndex = Array.IndexOf(_themeKeys, activeTheme) + 1;
+            int pickedTheme = _kit.Selector("Custom Theme", themeNames, Mathf.Max(0, themeIndex));
+            if (pickedTheme != Mathf.Max(0, themeIndex))
+            {
+                DuckCamConfig.CustomTheme.Value = pickedTheme == 0 ? "" : _themeKeys[pickedTheme - 1];
+                HudTheme.ReloadCustom();
+            }
+            if (_kit.Action("Theme Editor", "Open"))
+            {
+                ThemeEditor.Show();
+            }
             DuckCamConfig.PanelSide.Value = _kit.Enum("Panel Side", DuckCamConfig.PanelSide.Value, new[] { "Right", "Left" });
             DuckCamConfig.UiScale.Value = _kit.Slider("UI Scale", DuckCamConfig.UiScale.Value, 0.6f, 1.8f, 0.05f);
             DuckCamConfig.PanelRows.Value = _kit.IntSlider("Panel Height", DuckCamConfig.PanelRows.Value, 6, 24, " rows");
