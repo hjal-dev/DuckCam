@@ -1,3 +1,7 @@
+---
+description: "Take your first SPT photo with DuckCam in two minutes: freeze the raid, move the free camera and capture."
+---
+
 # Quick Start
 
 Your first DuckCam photo in about two minutes.

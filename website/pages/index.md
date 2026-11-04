@@ -1,3 +1,8 @@
+---
+title: "Photo Mode for SPT (Single Player Tarkov)"
+description: "Free photo mode mod for SPT 4.1 (Single Player Tarkov): freeze raids, free camera, posing, bot spawner, 16K screenshots and video."
+---
+
 <div class="wip-banner">This wiki is a WIP and is being updated every day. If a page you are interested in isn't finished, check back later!</div>
 
 ![DuckCam](images/banner.png)

@@ -1,3 +1,7 @@
+---
+description: "DuckCam free camera for SPT (Single Player Tarkov): fly anywhere, lens and FOV, roll, and camera bookmarks."
+---
+
 # Camera
 
 Where the camera is, how it moves, and what it can see.

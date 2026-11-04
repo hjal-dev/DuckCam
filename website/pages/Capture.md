@@ -1,3 +1,7 @@
+---
+description: "DuckCam capture for SPT: screenshots up to 16K, transparent photos and smooth video recording."
+---
+
 # Capture
 
 Photos (screen size to 16K, optional transparent background) and video.

@@ -1,3 +1,7 @@
+---
+description: "DuckCam Bot Spawner for SPT: spawn any bot, boss or faction with your own gear and kits for photos."
+---
+
 # Bot Spawner
 
 Spawn **real bots** exactly where you click, with the gear and weapons you choose. Works live or frozen.

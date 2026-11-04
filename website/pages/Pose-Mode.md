@@ -1,3 +1,7 @@
+---
+description: "DuckCam Pose Mode for SPT: pose characters bone by bone, Blender style, and save your poses."
+---
+
 # Pose Mode
 
 A Blender-style pose editor: pose any character bone by bone, with gizmos, IK, mirroring, undo and a pose library. If you know Blender's Pose Mode, you already know the keys.

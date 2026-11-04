@@ -1,3 +1,7 @@
+---
+description: "How to install the DuckCam photo mode mod in SPT 4.1 (Single Player Tarkov) and check that it loads."
+---
+
 # Installation
 
 ## Requirements

@@ -1,3 +1,7 @@
+---
+description: "Fixes and answers for the DuckCam photo mode mod in SPT (Single Player Tarkov)."
+---
+
 # Troubleshooting and FAQ
 
 ## Reporting a problem
